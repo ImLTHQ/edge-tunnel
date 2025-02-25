@@ -31,7 +31,7 @@ let 嘲讽语 = "杂鱼~"
 
 // 网页入口
 export default {
-  async fetch(访问请求) {
+  async fetch(访问请求,env) {
     订阅路径 = env.SUB_PATH || "sub"
     const 读取我的请求标头 = 访问请求.headers.get("Upgrade")
     const url = new URL(访问请求.url)
