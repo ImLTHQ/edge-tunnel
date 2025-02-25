@@ -26,7 +26,7 @@ let 嘲讽语 = "杂鱼~"
 export default {
   async fetch(访问请求, env) {
     // 使用环境变量设置默认值
-    const 订阅路径 = env.SUB_PATH || "sub"
+    订阅路径 = env.SUB_PATH || "sub"
     const 读取我的请求标头 = 访问请求.headers.get("Upgrade")
     const url = new URL(访问请求.url)
     if (!读取我的请求标头 || 读取我的请求标头 !== "websocket") {
