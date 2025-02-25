@@ -1,12 +1,5 @@
 import { connect } from "cloudflare:sockets"
 // 配置区块
-let 订阅路径 = "sub"
-  // 订阅路径 域名/订阅路径
-let 默认节点名称 = "节点"
-  // 默认节点名称
-let 我的UUID = "550e8400-e29b-41d4-a716-446655440000"
-  // 用于验证的UUID
-
 let 我的优选 = []
     // 格式: 地址/域名:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 let 我的优选TXT = [
@@ -31,8 +24,9 @@ let 嘲讽语 = "杂鱼~"
 
 // 网页入口
 export default {
-  async fetch(访问请求,env) {
-    订阅路径 = env.SUB_PATH || "sub"
+  async fetch(访问请求, env) {
+    // 使用环境变量设置默认值
+    const 订阅路径 = env.SUB_PATH || "sub"
     const 读取我的请求标头 = 访问请求.headers.get("Upgrade")
     const url = new URL(访问请求.url)
     if (!读取我的请求标头 || 读取我的请求标头 !== "websocket") {
@@ -67,7 +61,7 @@ export default {
         const 工具 = Object.keys(配置生成器).find(工具 => 用户代理.includes(工具))
         const 生成配置 = 配置生成器[工具 || 'default']
 
-        return new Response(生成配置(访问请求.headers.get("Host")), {
+        return new Response(生成配置(访问请求.headers.get("Host"), env), {
           status: 200,
           headers: { "Content-Type": "text/plain;charset=utf-8" },
         })
@@ -81,13 +75,13 @@ export default {
       }
 
     } else if (读取我的请求标头 === "websocket") {
-      return await 升级WS请求(访问请求)
+      return await 升级WS请求(访问请求, env)
     }
   },
 }
 // 脚本主要架构
 //第一步，读取和构建基础访问结构
-async function 升级WS请求(访问请求) {
+async function 升级WS请求(访问请求, env) {
   const 创建WS接口 = new WebSocketPair()
   const [客户端, WS接口] = Object.values(创建WS接口)
   WS接口.accept()
@@ -95,7 +89,7 @@ async function 升级WS请求(访问请求) {
     "sec-websocket-protocol"
   )
   const 解密数据 = 使用64位加解密(读取我的加密访问内容数据头) //解密目标访问数据，传递给TCP握手进程
-  const { TCP接口, 写入初始数据 } = await 解析VL标头(解密数据) //解析VL数据并进行TCP握手
+  const { TCP接口, 写入初始数据 } = await 解析VL标头(解密数据, env) //解析VL数据并进行TCP握手
   建立传输管道(WS接口, TCP接口, 写入初始数据)
   return new Response(null, { status: 101, webSocket: 客户端 })
 }
@@ -108,8 +102,9 @@ function 使用64位加解密(还原混淆字符) {
   return 解密.buffer
 }
 //第二步，解读VL协议数据，创建TCP握手
-async function 解析VL标头(VL数据, TCP接口) {
-  if (
+async function 解析VL标头(VL数据, env) {
+    const 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000"
+    if (
     验证VL的密钥(new Uint8Array(VL数据.slice(1, 17))) !== 我的UUID
   ) {
     return null
@@ -381,7 +376,9 @@ function 重定向到伪装网页(访问请求, url) {
     return fetch(访问请求)
 }
 
-function v2ray配置文件(hostName) {
+function v2ray配置文件(hostName, env) {
+    const 默认节点名称 = env.SUB_NAME || "节点"
+    const 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000"
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`]
   }
@@ -397,7 +394,9 @@ function v2ray配置文件(hostName) {
     .join("\n")
 }
 
-function clash配置文件(hostName) {
+function clash配置文件(hostName, env) {
+    const 默认节点名称 = env.SUB_NAME || "节点"
+    const 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000"
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`]
   }
