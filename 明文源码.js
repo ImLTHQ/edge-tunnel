@@ -363,7 +363,7 @@ body {
   );
 }
 
-function v2ray配置文件(hostName) {
+function v2ray配置文件(hostName, env) {
   const 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
@@ -379,7 +379,7 @@ function v2ray配置文件(hostName) {
     })
     .join("\n");
 }
-function clash配置文件(hostName) {
+function clash配置文件(hostName, env) {
   const 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
