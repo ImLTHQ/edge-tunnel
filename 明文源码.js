@@ -408,7 +408,7 @@ function clash配置文件(hostName) {
   const 代理配置 = 生成节点(我的优选)
     .map((node) => node.proxyConfig)
     .join("\n");
-  const CF规则 = 启用反代功能
+  const CF规则 = 反代IP || 我的SOCKS5账号
     ? []
     : [
         "  - GEOIP,CLOUDFLARE,DIRECT,no-resolve",
