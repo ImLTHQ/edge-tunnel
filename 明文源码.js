@@ -339,20 +339,7 @@ async function 获取SOCKS5账号(SOCKS5) {
 }
 // 订阅页面
 function 提示界面() {
-  return new Response(`
-<title>${订阅路径}</title>
-<style>
-body {
-  font-size: 25px;
-}
-</style>
-<pre>
-请把链接导入clash或v2ray
-<pre>
-    `, {
-      status: 200,
-      headers: { "Content-Type": "text/html;charset=utf-8" },
-  })
+  return `请把链接导入clash或v2ray`
 }
 
 function 生成项目介绍页面() {
