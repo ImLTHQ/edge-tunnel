@@ -1,7 +1,7 @@
 import { connect } from "cloudflare:sockets";
 
 // 配置区块
-var 订阅路径 = "sub";
+var 订阅路径 = env.SUB_PATH || "sub";
 // 订阅路径 域名/订阅路径
 var 默认节点名称 = "节点";
 // 默认节点名称
