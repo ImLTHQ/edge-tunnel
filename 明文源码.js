@@ -24,6 +24,8 @@ const 我的SOCKS5账号 = "";
 // 网页入口
 export default {
   async fetch(访问请求, env) {
+    let 我的UUID
+    我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
     const 订阅路径 = env.SUB_PATH || "sub";
     const 读取我的请求标头 = 访问请求.headers.get("Upgrade");
     const url = new URL(访问请求.url);
@@ -95,8 +97,7 @@ function 使用64位加解密(还原混淆字符) {
   return 解密.buffer;
 }
 //第二步，解读VL协议数据，创建TCP握手
-async function 解析VL标头(VL数据, TCP接口, env) {
-  let 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
+async function 解析VL标头(VL数据, TCP接口) {
   if (验证VL的密钥(new Uint8Array(VL数据.slice(1, 17))) !== 我的UUID) {
     return null;
   }
@@ -361,8 +362,7 @@ body {
   );
 }
 
-function v2ray配置文件(hostName, env) {
-  let 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
+function v2ray配置文件(hostName) {
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
   }
@@ -377,8 +377,7 @@ function v2ray配置文件(hostName, env) {
     })
     .join("\n");
 }
-function clash配置文件(hostName, env) {
-  let 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
+function clash配置文件(hostName) {
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
   }
