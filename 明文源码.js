@@ -1,37 +1,34 @@
 import { connect } from "cloudflare:sockets";
 
 // 配置区块
-var 订阅路径 = "sub";
-// 订阅路径 域名/订阅路径
-var 默认节点名称 = "节点";
-// 默认节点名称
-var 我的UUID = "550e8400-e29b-41d4-a716-446655440000";
-// 用于验证的UUID
-
-var 我的优选 = [];
-// 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
-var 我的优选TXT = [
+const 默认节点名称 = "节点";
+const 我的优选TXT = [
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/Domain.txt",
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/HK.txt",
 ];
-// 使用TXT时脚本内部填写的节点无效，二选一
+// 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-var 启用反代功能 = true;
+const 启用反代功能 = true;
 // 是否启用反代功能 (总开关)
-var 反代地址 = "ts.hpc.tw:443";
+const 反代地址 = "ts.hpc.tw:443";
 // 格式：地址:端口
 
-var 启用SOCKS5反代 = false;
+const 启用SOCKS5反代 = false;
 // 启用后原始反代将失效
-var 启用SOCKS5全局反代 = false;
-var 我的SOCKS5账号 = "";
+const 启用SOCKS5全局反代 = false;
+const 我的SOCKS5账号 = "";
 // 格式：账号:密码@地址:端口
 
 // 网页入口
 export default {
-  async fetch(访问请求) {
+  async fetch(访问请求, env) {
+    const 订阅路径 = env.SUB_PATH || "sub";
+    const 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
+    let 我的优选 = [];
+
     const 读取我的请求标头 = 访问请求.headers.get("Upgrade");
     const url = new URL(访问请求.url);
+
     if (!读取我的请求标头 || 读取我的请求标头 !== "websocket") {
       if (我的优选TXT.length > 0) {
         我的优选 = (
@@ -75,13 +72,14 @@ export default {
         return 生成项目介绍页面();
       }
     } else if (读取我的请求标头 === "websocket") {
-      return await 升级WS请求(访问请求);
+      return await 升级WS请求(访问请求, 我的UUID);
     }
   },
 };
+
 // 脚本主要架构
 //第一步，读取和构建基础访问结构
-async function 升级WS请求(访问请求) {
+async function 升级WS请求(访问请求, 我的UUID) {
   const 创建WS接口 = new WebSocketPair();
   const [客户端, WS接口] = Object.values(创建WS接口);
   WS接口.accept();
@@ -89,7 +87,7 @@ async function 升级WS请求(访问请求) {
     "sec-websocket-protocol"
   );
   const 解密数据 = 使用64位加解密(读取我的加密访问内容数据头); //解密目标访问数据，传递给TCP握手进程
-  const { TCP接口, 写入初始数据 } = await 解析VL标头(解密数据); //解析VL数据并进行TCP握手
+  const { TCP接口, 写入初始数据 } = await 解析VL标头(解密数据, 我的UUID); //解析VL数据并进行TCP握手
   建立传输管道(WS接口, TCP接口, 写入初始数据);
   return new Response(null, { status: 101, webSocket: 客户端 });
 }
@@ -100,7 +98,7 @@ function 使用64位加解密(还原混淆字符) {
   return 解密.buffer;
 }
 //第二步，解读VL协议数据，创建TCP握手
-async function 解析VL标头(VL数据, TCP接口) {
+async function 解析VL标头(VL数据, 我的UUID) {
   if (验证VL的密钥(new Uint8Array(VL数据.slice(1, 17))) !== 我的UUID) {
     return null;
   }
@@ -366,6 +364,7 @@ body {
 }
 
 function v2ray配置文件(hostName) {
+  const 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
   }
@@ -381,6 +380,7 @@ function v2ray配置文件(hostName) {
     .join("\n");
 }
 function clash配置文件(hostName) {
+  const 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
   }
