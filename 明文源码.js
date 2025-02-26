@@ -1,6 +1,7 @@
 import { connect } from "cloudflare:sockets";
 
 // 配置区块
+let 我的UUID = "";
 const 默认节点名称 = "节点";
 
 let 我的优选 = [];
@@ -24,7 +25,6 @@ const 我的SOCKS5账号 = "";
 // 网页入口
 export default {
   async fetch(访问请求, env) {
-    let 我的UUID
     我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
     const 订阅路径 = env.SUB_PATH || "sub";
     const 读取我的请求标头 = 访问请求.headers.get("Upgrade");
