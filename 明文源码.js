@@ -76,7 +76,7 @@ export default {
 };
 // 脚本主要架构
 //第一步，读取和构建基础访问结构
-async function 升级WS请求(访问请求, 我的UUID) {
+async function 升级WS请求(访问请求) {
   const 创建WS接口 = new WebSocketPair();
   const [客户端, WS接口] = Object.values(创建WS接口);
   WS接口.accept();
@@ -84,7 +84,7 @@ async function 升级WS请求(访问请求, 我的UUID) {
     "sec-websocket-protocol"
   );
   const 解密数据 = 使用64位加解密(读取我的加密访问内容数据头); //解密目标访问数据，传递给TCP握手进程
-  const { TCP接口, 写入初始数据 } = await 解析VL标头(解密数据, 我的UUID); //解析VL数据并进行TCP握手
+  const { TCP接口, 写入初始数据 } = await 解析VL标头(解密数据, TCP接口, env); //解析VL数据并进行TCP握手
   建立传输管道(WS接口, TCP接口, 写入初始数据);
   return new Response(null, { status: 101, webSocket: 客户端 });
 }
@@ -95,7 +95,7 @@ function 使用64位加解密(还原混淆字符) {
   return 解密.buffer;
 }
 //第二步，解读VL协议数据，创建TCP握手
-async function 解析VL标头(VL数据, TCP接口, env, 我的UUID) {
+async function 解析VL标头(VL数据, TCP接口, env) {
   const 我的UUID = env.SUB_UUID || "550e8400-e29b-41d4-a716-446655440000";
   if (验证VL的密钥(new Uint8Array(VL数据.slice(1, 17))) !== 我的UUID) {
     return null;
