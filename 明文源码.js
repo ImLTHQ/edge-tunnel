@@ -1,30 +1,30 @@
 import { connect } from "cloudflare:sockets"
 
 // 配置区块
-let 订阅路径 = "sub"
+var 订阅路径 = "sub"
 // 订阅路径 域名/订阅路径
-let 默认节点名称 = "节点"
+var 默认节点名称 = "节点"
 // 默认节点名称
-let 我的UUID = "550e8400-e29b-41d4-a716-446655440000"
+var 我的UUID = "550e8400-e29b-41d4-a716-446655440000"
 // 用于验证的UUID
 
-let 我的优选 = []
+var 我的优选 = []
 // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
-let 我的优选TXT = [
+var 我的优选TXT = [
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/Domain.txt",
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/HK.txt",
 ]
 //使用TXT时脚本内部填写的节点无效，二选一
 
-let 启用反代功能 = true
+var 启用反代功能 = true
 // 是否启用反代功能 (总开关)
-let 反代地址 = "ts.hpc.tw:443"
+var 反代地址 = "ts.hpc.tw:443"
 // 格式：地址:端口
 
-let 启用SOCKS5反代 = false
+var 启用SOCKS5反代 = false
 // 启用后原始反代将失效
-let 启用SOCKS5全局反代 = false
-let 我的SOCKS5账号 = ""
+var 启用SOCKS5全局反代 = false
+var 我的SOCKS5账号 = ""
 // 格式：账号:密码@地址:端口
 
 // 网页入口
