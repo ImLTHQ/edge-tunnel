@@ -69,18 +69,21 @@ export default {
       if (url.pathname === `/${订阅路径}`) {
         const 用户代理 = 访问请求.headers.get("User-Agent").toLowerCase();
         const 配置生成器 = {
-            v2ray: () => v2ray配置文件,
-            clash: () => clash配置文件,
-            default: () => 提示界面,
+          v2ray: v2ray配置文件,
+          clash: clash配置文件,
+          default: 提示界面,
         };
         const 工具 = Object.keys(配置生成器).find((工具) =>
-            用户代理.includes(工具)
+          用户代理.includes(工具)
         );
-        const 生成配置函数 = 配置生成器[工具 || "default"]();
-        return 生成配置函数(访问请求.headers.get("Host"));
-    } else {
+        const 生成配置 = 配置生成器[工具 || "default"];
+        return new Response(生成配置(访问请求.headers.get("Host")), {
+          status: 200,
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+        });
+      } else {
         return 生成项目介绍页面();
-    }
+      }
     } else if (读取我的请求标头 === "websocket") {
       return await 升级WS请求(访问请求);
     }
