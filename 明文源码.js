@@ -69,22 +69,18 @@ export default {
       if (url.pathname === `/${订阅路径}`) {
         const 用户代理 = 访问请求.headers.get("User-Agent").toLowerCase();
         const 配置生成器 = {
-          v2ray: v2ray配置文件,
-          clash: clash配置文件,
-          default: 提示界面,
+            v2ray: () => v2ray配置文件,
+            clash: () => clash配置文件,
+            default: () => 提示界面,
         };
         const 工具 = Object.keys(配置生成器).find((工具) =>
-          用户代理.includes(工具)
+            用户代理.includes(工具)
         );
-        const 生成配置 = 配置生成器[工具 || "default"];
-
-        return new Response(生成配置(访问请求.headers.get("Host")), {
-          status: 200,
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-        });
-      } else {
+        const 生成配置函数 = 配置生成器[工具 || "default"]();
+        return 生成配置函数(访问请求.headers.get("Host"));
+    } else {
         return 生成项目介绍页面();
-      }
+    }
     } else if (读取我的请求标头 === "websocket") {
       return await 升级WS请求(访问请求);
     }
@@ -420,14 +416,14 @@ function clash配置文件(hostName) {
   const 代理配置 = 生成节点(我的优选)
     .map((node) => node.proxyConfig)
     .join("\n");
-  const CF规则 = 反代IP || 我的SOCKS5账号
-    ? []
-    : [
-        "  - GEOIP,CLOUDFLARE,DIRECT,no-resolve",
-        "  - GEOSITE,cloudflare,DIRECT",
-        "  - DOMAIN-KEYWORD,cloudflare,DIRECT",
-      ];
   return `
+dns:
+  nameserver:
+    - 180.76.76.76
+    - 2400:da00::6666
+  fallback:
+    - 8.8.8.8
+    - 2001:4860:4860::8888
 proxies:
 ${节点配置}
 proxy-groups:
@@ -438,6 +434,16 @@ proxy-groups:
     - 🔯 故障转移
 ${代理配置}
 - name: 🐟 漏网之鱼
+  type: select
+  proxies:
+    - DIRECT
+    - 🚀 节点选择
+- name: 🌏 CF规则
+  type: select
+  proxies:
+    - 🚀 节点选择
+    - DIRECT
+- name: 🎯 国内直连
   type: select
   proxies:
     - DIRECT
@@ -458,12 +464,14 @@ ${代理配置}
   proxies:
 ${代理配置}
 rules:
-${CF规则.join("\n")}
   - GEOIP,LAN,DIRECT,no-resolve
-  - GEOSITE,cn,DIRECT
-  - GEOIP,CN,DIRECT,no-resolve
-  - DOMAIN-SUFFIX,cn,DIRECT
   - GEOSITE,category-ads-all,REJECT
+  - GEOIP,CLOUDFLARE,🌏 CF规则,no-resolve
+  - GEOSITE,cloudflare,🌏 CF规则
+  - DOMAIN-KEYWORD,cloudflare,🌏 CF规则
+  - GEOSITE,cn,🎯 国内直连
+  - GEOIP,CN,🎯 国内直连,no-resolve
+  - DOMAIN-SUFFIX,cn,🎯 国内直连
   - GEOSITE,gfw,🚀 节点选择
   - GEOSITE,google,🚀 节点选择
   - GEOIP,GOOGLE,🚀 节点选择,no-resolve
