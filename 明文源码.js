@@ -22,15 +22,6 @@ let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = "";  // 格式：账号:密码@地址:端口
 
-// Punycode
-const punycode = {
-  toASCII: function (domain) {
-    return domain.replace(/[\u4e00-\u9fa5]/g, function (char) {
-      return "xn--" + char.charCodeAt(0).toString(16);
-    });
-  },
-};
-
 // 网页入口
 export default {
   async fetch(访问请求, env) {
@@ -75,18 +66,10 @@ export default {
 
         // 去重处理
         我的优选 = [...new Set(我的优选)];
-
-        // 对优选节点进行 Punycode 转码
-        我的优选 = 我的优选.map(item => {
-          const [addressPort, nodeName] = item.split("#");
-          const [address, port] = addressPort.split(":");
-          const encodedAddress = punycode.toASCII(address);
-          return `${encodedAddress}:${port || "443"}${nodeName ? "#" + nodeName : ""}`;
-        });
       }
 
-      const encodedSubPath = encodeURIComponent(订阅路径);
-      if (url.pathname === `/${encodedSubPath}`) {
+      const encodedSubPath = encodeURIComponent(订阅路径); // 对订阅路径进行编码
+      if (url.pathname === `/${encodedSubPath}`) { // 使用编码后的路径进行匹配
         const 用户代理 = 访问请求.headers.get("User-Agent").toLowerCase();
         const 配置生成器 = {
           v2ray: v2ray配置文件,
