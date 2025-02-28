@@ -379,8 +379,7 @@ function v2ray配置文件(hostName) {
   }
   return 我的优选
     .map((获取优选) => {
-      const [主内容] = 获取优选
-      const [地址端口, 节点名字 = 默认节点名称] = 主内容.split("#");
+      const [地址端口, 节点名字 = 默认节点名称] = 获取优选.split("#");
       const 拆分地址端口 = 地址端口.split(":");
       const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
       const 地址 = 拆分地址端口.join(":");
@@ -388,15 +387,15 @@ function v2ray配置文件(hostName) {
     })
     .join("\n");
 }
+
 function clash配置文件(hostName) {
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
   }
   const 生成节点 = (我的优选) => {
     return 我的优选.map((获取优选, index) => {
-      const [主内容] = 获取优选
       const [地址端口, 节点名字 = `${默认节点名称} ${index + 1}`] =
-        主内容.split("#");
+        获取优选.split("#");
       const 拆分地址端口 = 地址端口.split(":");
       const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
       const 地址 = 拆分地址端口.join(":").replace(/^\[(.+)\]$/, "$1");
