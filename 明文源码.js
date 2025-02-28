@@ -16,27 +16,18 @@ let 我的优选TXT = [
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SEA.txt",
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
 ];
-    // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
+// 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
 let 反代IP = "ts.hpc.tw:443";
-    // 格式：地址:端口
+// 格式：地址:端口
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = "";
-    // 格式：账号:密码@地址:端口
+// 格式：账号:密码@地址:端口
 
-// 中文域名Punycode编码函数
-function punycodeEncode(domain) {
-  let encoded = "";
-  for (let i = 0; i < domain.length; i++) {
-    const charCode = domain.charCodeAt(i);
-    if (charCode > 127) {
-      encoded += `&#${charCode};`;
-    } else {
-      encoded += domain[i];
-    }
-  }
-  return encoded;
+// 中文域名编码函数 (使用 encodeURIComponent)
+function encodeDomain(domain) {
+  return encodeURIComponent(domain);
 }
 
 // 网页入口
@@ -84,14 +75,19 @@ export default {
         // 去重处理
         我的优选 = [...new Set(我的优选)];
 
-        // 对优选域名进行 Punycode 编码
+        // 对优选域名和节点名称进行编码
         我的优选 = 我的优选.map(entry => {
-          const [addressPort, nodeName] = entry.split("#");
+          let [addressPort, nodeName = ""] = entry.split("#");
           let [address, port] = addressPort.split(":");
 
-          // 检查域名是否包含中文字符
+          // 编码域名
           if (/[^\x00-\x7F]+/.test(address)) {
-            address = punycodeEncode(address); // 转换为 HTML 实体
+            address = encodeDomain(address);
+          }
+
+          // 编码节点名称
+          if (/[^\x00-\x7F]+/.test(nodeName)) {
+            nodeName = encodeDomain(nodeName);
           }
 
           return `${address}:${port || 443}${nodeName ? `#${nodeName}` : ""}`;
@@ -407,11 +403,17 @@ function v2ray配置文件(hostName) {
   }
   return 我的优选
     .map((获取优选) => {
-      const [地址端口, 节点名字 = 默认节点名称] = 获取优选.split("#");
-      const 拆分地址端口 = 地址端口.split(":");
-      const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
-      const 地址 = 拆分地址端口.join(":");
-      return `vless://${我的UUID}@${地址}:${端口}?encryption=none&security=tls&sni=${hostName}&fp=chrome&type=ws&host=${hostName}&path=%2F%3Fed%3D2560#${节点名字}`;
+      let [addressPort, nodeName = ""] = 获取优选.split("#");
+      let [address, port] = addressPort.split(":");
+
+        // 编码域名和节点名称
+        if (/[^\x00-\x7F]+/.test(address)) {
+          address = encodeDomain(address);
+        }
+        if (/[^\x00-\x7F]+/.test(nodeName)) {
+            nodeName = encodeDomain(nodeName);
+        }
+      return `vless://${我的UUID}@${address}:${port || 443}?encryption=none&security=tls&sni=${hostName}&fp=chrome&type=ws&host=${hostName}&path=%2F%3Fed%3D2560#${nodeName}`;
     })
     .join("\n");
 }
@@ -422,16 +424,21 @@ function clash配置文件(hostName) {
   }
   const 生成节点 = (我的优选) => {
     return 我的优选.map((获取优选, index) => {
-      const [地址端口, 节点名字 = `${默认节点名称} ${index + 1}`] =
+      let [addressPort, nodeName = `${默认节点名称} ${index + 1}`] =
         获取优选.split("#");
-      const 拆分地址端口 = 地址端口.split(":");
-      const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
-      const 地址 = 拆分地址端口.join(":").replace(/^\[(.+)\]$/, "$1");
+      let [address, port] = addressPort.split(":");
       const userAgent = "Chrome";
-      return {
-        nodeConfig: `- name: ${节点名字}
+
+      // 编码域名和节点名称
+      if (/[^\x00-\x7F]+/.test(address)) {
+          address = encodeDomain(address);
+      }
+      if (/[^\x00-\x7F]+/.test(nodeName)) {
+          nodeName = encodeDomain(nodeName);
+      }
+      const nodeConfig = `- name: ${nodeName}
   type: vless
-  server: ${地址}
+  server: ${address}
   port: ${端口}
   uuid: ${我的UUID}
   udp: true
@@ -442,8 +449,10 @@ function clash配置文件(hostName) {
     path: "/?ed=2560"
     headers:
       Host: ${hostName}
-      User-Agent: ${userAgent}`,
-        proxyConfig: `    - ${节点名字}`,
+      User-Agent: ${userAgent}`;
+      return {
+        nodeConfig: nodeConfig,
+        proxyConfig: `    - ${nodeName}`,
       };
     });
   };
