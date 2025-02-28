@@ -1,5 +1,14 @@
 import { connect } from "cloudflare:sockets";
 
+// Punycode 库 (简化版本)
+const punycode = {
+  toASCII: function (domain) {
+    return domain.replace(/[\u4e00-\u9fa5]/g, function (char) {
+      return "xn--" + char.charCodeAt(0).toString(16);
+    });
+  },
+};
+
 // 配置区块
 let 订阅路径 = "sub";
 let 我的UUID = "550e8400-e29b-41d4-a716-446655440000";
@@ -24,11 +33,6 @@ let 反代IP = "ts.hpc.tw:443";
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = "";
 // 格式：账号:密码@地址:端口
-
-// 中文域名编码函数 (使用 encodeURIComponent)
-function encodeDomain(domain) {
-  return encodeURIComponent(domain);
-}
 
 // 网页入口
 export default {
@@ -75,22 +79,12 @@ export default {
         // 去重处理
         我的优选 = [...new Set(我的优选)];
 
-        // 对优选域名和节点名称进行编码
-        我的优选 = 我的优选.map(entry => {
-          let [addressPort, nodeName = ""] = entry.split("#");
-          let [address, port] = addressPort.split(":");
-
-          // 编码域名
-          if (/[^\x00-\x7F]+/.test(address)) {
-            address = encodeDomain(address);
-          }
-
-          // 编码节点名称
-          if (/[^\x00-\x7F]+/.test(nodeName)) {
-            nodeName = encodeDomain(nodeName);
-          }
-
-          return `${address}:${port || 443}${nodeName ? `#${nodeName}` : ""}`;
+        // 对优选节点进行 Punycode 转码
+        我的优选 = 我的优选.map(item => {
+          const [addressPort, nodeName] = item.split("#");
+          const [address, port] = addressPort.split(":");
+          const encodedAddress = punycode.toASCII(address);
+          return `${encodedAddress}:${port || "443"}${nodeName ? "#" + nodeName : ""}`;
         });
       }
 
@@ -99,7 +93,7 @@ export default {
         const 配置生成器 = {
           v2ray: v2ray配置文件,
           clash: clash配置文件,
-          default: clash配置文件,
+          default: 提示界面,
         };
         const 工具 = Object.keys(配置生成器).find((工具) =>
           用户代理.includes(工具)
@@ -117,7 +111,6 @@ export default {
     }
   },
 };
-
 // 脚本主要架构
 //第一步，读取和构建基础访问结构
 async function 升级WS请求(访问请求) {
@@ -326,7 +319,7 @@ async function 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口
           .split(":")
           .flatMap((x) => [
             parseInt(x.slice(0, 2), 16),
-            parseInt(x.slice(2,4), 16),
+            parseInt(x.slice(2), 16),
           ]),
       ]);
       break;
@@ -403,17 +396,11 @@ function v2ray配置文件(hostName) {
   }
   return 我的优选
     .map((获取优选) => {
-      let [addressPort, nodeName = ""] = 获取优选.split("#");
-      let [address, port] = addressPort.split(":");
-
-        // 编码域名和节点名称
-        if (/[^\x00-\x7F]+/.test(address)) {
-          address = encodeDomain(address);
-        }
-        if (/[^\x00-\x7F]+/.test(nodeName)) {
-            nodeName = encodeDomain(nodeName);
-        }
-      return `vless://${我的UUID}@${address}:${port || 443}?encryption=none&security=tls&sni=${hostName}&fp=chrome&type=ws&host=${hostName}&path=%2F%3Fed%3D2560#${nodeName}`;
+      const [地址端口, 节点名字 = 默认节点名称] = 获取优选.split("#");
+      const 拆分地址端口 = 地址端口.split(":");
+      const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
+      const 地址 = 拆分地址端口.join(":");
+      return `vless://${我的UUID}@${地址}:${端口}?encryption=none&security=tls&sni=${hostName}&fp=chrome&type=ws&host=${hostName}&path=%2F%3Fed%3D2560#${节点名字}`;
     })
     .join("\n");
 }
@@ -424,21 +411,16 @@ function clash配置文件(hostName) {
   }
   const 生成节点 = (我的优选) => {
     return 我的优选.map((获取优选, index) => {
-      let [addressPort, nodeName = `${默认节点名称} ${index + 1}`] =
+      const [地址端口, 节点名字 = `${默认节点名称} ${index + 1}`] =
         获取优选.split("#");
-      let [address, port] = addressPort.split(":");
+      const 拆分地址端口 = 地址端口.split(":");
+      const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
+      const 地址 = 拆分地址端口.join(":").replace(/^\[(.+)\]$/, "$1");
       const userAgent = "Chrome";
-
-      // 编码域名和节点名称
-      if (/[^\x00-\x7F]+/.test(address)) {
-          address = encodeDomain(address);
-      }
-      if (/[^\x00-\x7F]+/.test(nodeName)) {
-          nodeName = encodeDomain(nodeName);
-      }
-      const nodeConfig = `- name: ${nodeName}
+      return {
+        nodeConfig: `- name: ${节点名字}
   type: vless
-  server: ${address}
+  server: ${地址}
   port: ${端口}
   uuid: ${我的UUID}
   udp: true
@@ -449,10 +431,8 @@ function clash配置文件(hostName) {
     path: "/?ed=2560"
     headers:
       Host: ${hostName}
-      User-Agent: ${userAgent}`;
-      return {
-        nodeConfig: nodeConfig,
-        proxyConfig: `    - ${nodeName}`,
+      User-Agent: ${userAgent}`,
+        proxyConfig: `    - ${节点名字}`,
       };
     });
   };
