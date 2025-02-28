@@ -442,21 +442,11 @@ proxy-groups:
     - ♻️ 自动选择
     - 🔯 故障转移
 ${代理配置}
-- name: 🐟 漏网之鱼
-  type: select
-  proxies:
-    - DIRECT
-    - 🚀 节点选择
 - name: 🎯 国内直连
   type: select
   proxies:
     - DIRECT
     - 🚀 节点选择
-- name: 🌏 CF规则
-  type: select
-  proxies:
-    - 🚀 节点选择
-    - DIRECT
 - name: ♻️ 自动选择
   type: url-test
   url: https://www.google.com/generate_204
@@ -478,10 +468,6 @@ rules:
   - GEOSITE,cn,🎯 国内直连
   - GEOIP,cn,🎯 国内直连
   - DOMAIN-SUFFIX,cn,🎯 国内直连
-  - GEOIP,cloudflare,🌏 CF规则
-  - GEOSITE,cloudflare,🌏 CF规则
-  - GEOSITE,gfw,🚀 节点选择
-  - GEOIP,gfw,🚀 节点选择
-  - MATCH,🐟 漏网之鱼
+  - MATCH,🚀 节点选择
 `;
 }
