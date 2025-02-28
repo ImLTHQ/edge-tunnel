@@ -16,14 +16,28 @@ let 我的优选TXT = [
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SEA.txt",
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
 ];
-// 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
+    // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
 let 反代IP = "ts.hpc.tw:443";
-// 格式：地址:端口
+    // 格式：地址:端口
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = "";
-// 格式：账号:密码@地址:端口
+    // 格式：账号:密码@地址:端口
+
+// 中文域名Punycode编码函数
+function punycodeEncode(domain) {
+  let encoded = "";
+  for (let i = 0; i < domain.length; i++) {
+    const charCode = domain.charCodeAt(i);
+    if (charCode > 127) {
+      encoded += `&#${charCode};`;
+    } else {
+      encoded += domain[i];
+    }
+  }
+  return encoded;
+}
 
 // 网页入口
 export default {
@@ -69,6 +83,19 @@ export default {
 
         // 去重处理
         我的优选 = [...new Set(我的优选)];
+
+        // 对优选域名进行 Punycode 编码
+        我的优选 = 我的优选.map(entry => {
+          const [addressPort, nodeName] = entry.split("#");
+          let [address, port] = addressPort.split(":");
+
+          // 检查域名是否包含中文字符
+          if (/[^\x00-\x7F]+/.test(address)) {
+            address = punycodeEncode(address); // 转换为 HTML 实体
+          }
+
+          return `${address}:${port || 443}${nodeName ? `#${nodeName}` : ""}`;
+        });
       }
 
       if (url.pathname === `/${订阅路径}`) {
@@ -94,6 +121,7 @@ export default {
     }
   },
 };
+
 // 脚本主要架构
 //第一步，读取和构建基础访问结构
 async function 升级WS请求(访问请求) {
@@ -302,7 +330,7 @@ async function 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口
           .split(":")
           .flatMap((x) => [
             parseInt(x.slice(0, 2), 16),
-            parseInt(x.slice(2), 16),
+            parseInt(x.slice(2,4), 16),
           ]),
       ]);
       break;
@@ -406,7 +434,7 @@ function clash配置文件(hostName) {
   server: ${地址}
   port: ${端口}
   uuid: ${我的UUID}
-  udp: false
+  udp: true
   tls: true
   sni: ${hostName}
   network: ws
