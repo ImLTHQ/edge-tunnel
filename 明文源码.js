@@ -378,13 +378,12 @@ function v2ray配置文件(hostName) {
     我的优选 = [`${hostName}:443`];
   }
   return 我的优选
-    .map((获取优选) => {
-      const [主内容] = 获取优选.split("@");
+    .map(() => {
       const [地址端口, 节点名字 = 默认节点名称] = 主内容.split("#");
       const 拆分地址端口 = 地址端口.split(":");
       const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
       const 地址 = 拆分地址端口.join(":");
-      return `vless://${我的UUID}@${地址}:${端口}?encryption=none&security=tls&sni=${hostName}&type=ws&host=${hostName}&path=%2F%3Fed%3D2560#${节点名字}`;
+      return `vless://${我的UUID}@${地址}:${端口}?encryption=none&security=tls&sni=${hostName}&fp=chrome&type=ws&host=${hostName}&path=%2F%3Fed%3D2560#${节点名字}`;
     })
     .join("\n");
 }
@@ -393,8 +392,7 @@ function clash配置文件(hostName) {
     我的优选 = [`${hostName}:443`];
   }
   const 生成节点 = (我的优选) => {
-    return 我的优选.map((获取优选, index) => {
-      const [主内容] = 获取优选.split("@");
+    return 我的优选.map((index) => {
       const [地址端口, 节点名字 = `${默认节点名称} ${index + 1}`] =
         主内容.split("#");
       const 拆分地址端口 = 地址端口.split(":");
@@ -446,16 +444,16 @@ ${代理配置}
   proxies:
     - DIRECT
     - 🚀 节点选择
-- name: 🌏 CF规则
-  type: select
-  proxies:
-    - 🚀 节点选择
-    - DIRECT
 - name: 🎯 国内直连
   type: select
   proxies:
     - DIRECT
     - 🚀 节点选择
+- name: 🌏 CF规则
+  type: select
+  proxies:
+    - 🚀 节点选择
+    - DIRECT
 - name: ♻️ 自动选择
   type: url-test
   url: https://www.google.com/generate_204
@@ -472,22 +470,15 @@ ${代理配置}
   proxies:
 ${代理配置}
 rules:
-  - GEOIP,LAN,DIRECT,no-resolve
+  - GEOIP,LAN,DIRECT
   - GEOSITE,category-ads-all,REJECT
-  - GEOIP,CLOUDFLARE,🌏 CF规则,no-resolve
-  - GEOSITE,cloudflare,🌏 CF规则
-  - DOMAIN-KEYWORD,cloudflare,🌏 CF规则
   - GEOSITE,cn,🎯 国内直连
-  - GEOIP,CN,🎯 国内直连,no-resolve
+  - GEOIP,cn,🎯 国内直连
   - DOMAIN-SUFFIX,cn,🎯 国内直连
+  - GEOIP,cloudflare,🌏 CF规则
+  - GEOSITE,cloudflare,🌏 CF规则
   - GEOSITE,gfw,🚀 节点选择
-  - GEOSITE,google,🚀 节点选择
-  - GEOIP,GOOGLE,🚀 节点选择,no-resolve
-  - GEOSITE,netflix,🚀 节点选择
-  - GEOIP,NETFLIX,🚀 节点选择,no-resolve
-  - GEOSITE,telegram,🚀 节点选择
-  - GEOIP,TELEGRAM,🚀 节点选择,no-resolve
-  - GEOSITE,openai,🚀 节点选择
+  - GEOIP,gfw,🚀 节点选择
   - MATCH,🐟 漏网之鱼
 `;
 }
