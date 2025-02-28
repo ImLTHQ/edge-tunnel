@@ -399,6 +399,7 @@ function clash配置文件(hostName) {
       const 拆分地址端口 = 地址端口.split(":");
       const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
       const 地址 = 拆分地址端口.join(":").replace(/^\[(.+)\]$/, "$1");
+      const userAgent = "Chrome";
       return {
         nodeConfig: `- name: ${节点名字}
   type: vless
@@ -412,7 +413,8 @@ function clash配置文件(hostName) {
   ws-opts:
     path: "/?ed=2560"
     headers:
-      Host: ${hostName}`,
+      Host: ${hostName}
+      User-Agent: ${userAgent}`,
         proxyConfig: `    - ${节点名字}`,
       };
     });
