@@ -85,7 +85,8 @@ export default {
         });
       }
 
-      if (url.pathname === `/${订阅路径}`) {
+      const encodedSubPath = encodeURIComponent(订阅路径);
+      if (url.pathname === `/${encodedSubPath}`) {
         const 用户代理 = 访问请求.headers.get("User-Agent").toLowerCase();
         const 配置生成器 = {
           v2ray: v2ray配置文件,
