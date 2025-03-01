@@ -484,13 +484,6 @@ function clash配置文件(hostName) {
   const CF规则 = !socks5Valid && !proxyIPValid ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
-dns:
-  nameserver:
-    - 1.1.1.1
-    - 2606:4700:4700::1111
-  fallback:
-    - 180.76.76.76
-    - 2400:da00::6666
 proxies:
 ${节点配置}
 proxy-groups:
