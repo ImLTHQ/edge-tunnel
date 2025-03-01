@@ -17,7 +17,7 @@ let 我的优选TXT = [
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
 ];  // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
+let 反代IP = ""; // 格式：地址:端口
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = "";  // 格式：账号:密码@地址:端口
@@ -430,6 +430,9 @@ function clash配置文件(hostName) {
   const 代理配置 = 生成节点(我的优选)
     .map((node) => node.proxyConfig)
     .join("\n");
+  const CF规则 = !反代IP && !我的SOCKS5账号 ? [] : [
+    '  - GEOIP,CLOUDFLARE,🎯 直连规则',
+  ]
   return `
 dns:
   nameserver:
@@ -459,10 +462,9 @@ ${代理配置}
   proxies:
 ${代理配置}
 rules:
+${CF规则.join('\n')}
   - GEOIP,lan,DIRECT
-  - GEOSITE,cn,🎯 直连规则
   - GEOIP,cn,🎯 直连规则
-  - DOMAIN-SUFFIX,cn,🎯 直连规则
   - MATCH,🚀 节点选择
 `;
 }
