@@ -409,7 +409,6 @@ function 测试SOCKS5和反代IP() {
       testSocket.opened;
       testSocket.close();
     } catch (error) {
-      console.log("SOCKS5 测试失败:", error);
       socks5Valid = false;
     }
   } else {
@@ -424,7 +423,6 @@ function 测试SOCKS5和反代IP() {
       testSocket.close();
       proxyIPValid = true;
     } catch (error) {
-      console.log("反代IP 测试失败:", error);
       proxyIPValid = false;
     }
   } else {
@@ -491,13 +489,6 @@ function clash配置文件(hostName) {
   const CF规则 = !socks5Valid && !proxyIPValid ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
-dns:
-  nameserver:
-    - 1.1.1.1
-    - 2606:4700:4700::1111
-  fallback:
-    - 180.76.76.76
-    - 2400:da00::6666
 proxies:
 ${节点配置}
 proxy-groups:
