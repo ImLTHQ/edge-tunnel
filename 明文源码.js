@@ -32,13 +32,13 @@ export default {
     启用SOCKS5全局反代 = env.SOCKS5GLOBAL === "true" ? true : env.SOCKS5GLOBAL === "false" ? false : 启用SOCKS5全局反代;
     我的SOCKS5账号 = env.SOCKS5 || 我的SOCKS5账号;
 
-    let env传入的URL = "";
-    env传入的URL = env.TXT_URL;
-    if (env传入的URL) {
-      if (typeof env传入的URL === 'string') {
-        我的优选TXT = env传入的URL.split('\n').map(line => line.trim()).filter(line => line);
-      } else if (Array.isArray(env传入的URL)) {
-        我的优选TXT = env传入的URL;
+    let env传入的TXT_URL = "";
+    env传入的TXT_URL = env.TXT_URL;
+    if (env传入的TXT_URL) {
+      if (typeof env传入的TXT_URL === 'string') {
+        我的优选TXT = env传入的TXT_URL.split('\n').map(line => line.trim()).filter(line => line);
+      } else if (Array.isArray(env传入的TXT_URL)) {
+        我的优选TXT = env传入的TXT_URL;
       } else {
         我的优选TXT = [];
       }
@@ -432,8 +432,8 @@ function clash配置文件(hostName) {
     .map((node) => node.proxyConfig)
     .join("\n");
 
-  // 测试 SOCKS5 和反代 IP
-  let socks5Valid = true; // 假设SOCKS5默认是正常的
+  // SOCKS5 和反代 IP都无效时加入CF直连规则
+  let socks5Valid = true;
 
   if (我的SOCKS5账号) {
     try {
@@ -443,12 +443,11 @@ function clash配置文件(hostName) {
       testSocket.close();
     } catch (error) {
       console.log("SOCKS5 测试失败:", error);
-      socks5Valid = false; // 如果SOCKS5连接失败,则设置为false
+      socks5Valid = false;
     }
   } else {
-    socks5Valid = false; // 没有SOCKS5账号的时候, 也认为SOCKS5是无效的, 避免不必要的判断.
+    socks5Valid = false; // 没有SOCKS5账号的时候, 也认为SOCKS5是无效的
   }
-
   const CF规则 = !socks5Valid && !反代IP ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
