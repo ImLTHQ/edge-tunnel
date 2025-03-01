@@ -449,7 +449,7 @@ function clash配置文件(hostName) {
     socks5Valid = false; // 没有SOCKS5账号的时候, 也认为SOCKS5是无效的, 避免不必要的判断.
   }
 
-  const CF规则 = !socks5Valid && !反代IP ? '- GEOIP,CLOUDFLARE,🎯 直连规则' : '';
+  const CF规则 = !socks5Valid && !反代IP ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
 dns:
