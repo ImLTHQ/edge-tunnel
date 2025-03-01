@@ -428,15 +428,10 @@ function 测试SOCKS5和反代IP() {
 }
 
 function v2ray配置文件(hostName) {
-  const { socks5Valid, proxyIPValid } = 测试SOCKS5和反代IP();
-    let 反代无效 = "";
-    if (!socks5Valid && !proxyIPValid) {
-        反代无效 = `socks5://127.0.0.1:1080#无法访问CF CDN 请设置反代\n`;
-    }
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
   }
-  return 反代无效 + 我的优选
+  return 我的优选
     .map((获取优选) => {
       const [地址端口, 节点名字 = 默认节点名称] = 获取优选.split("#");
       const 拆分地址端口 = 地址端口.split(":");
@@ -447,19 +442,7 @@ function v2ray配置文件(hostName) {
     .join("\n");
 }
 
-async function clash配置文件(hostName) {
-  const { socks5Valid, proxyIPValid } = await 测试SOCKS5和反代IP();
-
-  let 反代无效 = "";
-  if (!socks5Valid && !proxyIPValid) {
-    反代无效 = `
-- name: ⚠️ 无法访问CF CDN 请设置反代
-  type: socks5
-  server: 127.0.0.1
-  port: 1080
-`;
-  }
-
+function clash配置文件(hostName) {
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
   }
@@ -490,23 +473,30 @@ async function clash配置文件(hostName) {
       };
     });
   };
-  const 节点配置 = 反代无效 + 生成节点(我的优选)
+  const 节点配置 = 生成节点(我的优选)
     .map((node) => node.nodeConfig)
     .join("\n");
   const 代理配置 = 生成节点(我的优选)
     .map((node) => node.proxyConfig)
     .join("\n");
 
+  const { socks5Valid, proxyIPValid } = 测试SOCKS5和反代IP();
   const CF规则 = !socks5Valid && !proxyIPValid ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
+dns:
+  nameserver:
+    - 1.1.1.1
+    - 2606:4700:4700::1111
+  fallback:
+    - 180.76.76.76
+    - 2400:da00::6666
 proxies:
 ${节点配置}
 proxy-groups:
 - name: 🚀 节点选择
   type: select
   proxies:
-${反代无效 ? "    - ⚠️ 无法访问CF CDN 请设置反代" : ""}
     - ♻️ 自动选择
 ${代理配置}
 - name: 🎯 直连规则
@@ -522,11 +512,11 @@ ${代理配置}
   proxies:
 ${代理配置}
 rules:
-  ${CF规则}
-  - GEOIP,CN,🎯 直连规则
+  - GEOIP,lan,DIRECT
+  - GEOIP,cn,🎯 直连规则
   - GEOSITE,cn,🎯 直连规则
   - DOMAIN-SUFFIX,cn,🎯 直连规则
-  - GEOIP,LAN,DIRECT
+  ${CF规则}
   - MATCH,🚀 节点选择
 `;
 }
