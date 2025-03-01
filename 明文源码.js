@@ -181,7 +181,7 @@ async function 解析VL标头(VL数据, TCP接口) {
             let [反代IP地址, 反代IP端口] = 反代IP.split(":");
             TCP接口 = connect({
               hostname: 反代IP地址,
-              port: 反代IP端口 || 访问端口,
+              port: Number(反代IP端口) || 443,
             });
           }
         }
@@ -189,7 +189,7 @@ async function 解析VL标头(VL数据, TCP接口) {
         let [反代IP地址, 反代IP端口] = 反代IP.split(":");
         TCP接口 = connect({
           hostname: 反代IP地址,
-          port: 反代IP端口 || 访问端口,
+          port: Number(反代IP端口) || 443,
         });
       }
     }
@@ -467,13 +467,13 @@ function clash配置文件(hostName) {
     try {
       const [反代IP地址, 反代IP端口] = 反代IP.split(":");
       // 尝试连接反代IP:端口, 简单的验证下反代IP是否可用
-      const testSocket = connect({ hostname: 反代IP地址, port: 反代IP端口 || 443 });
+      const testSocket = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
       testSocket.opened;
       testSocket.close();
-      proxyIPValid = true; // 反代IP验证通过
+      proxyIPValid = true;
     } catch (error) {
       console.log("反代IP 测试失败:", error);
-      proxyIPValid = false; // 反代IP验证失败
+      proxyIPValid = false;
     }
   }
 
