@@ -510,6 +510,8 @@ ${代理配置}
 rules:
   - GEOIP,lan,DIRECT
   - GEOIP,cn,🎯 直连规则
+  - GEOSITE,cn,🎯 直连规则
+  - DOMAIN-SUFFIX,cn,🎯 直连规则
   ${CF规则}
   - MATCH,🚀 节点选择
 `;
