@@ -6,7 +6,6 @@ let 我的UUID = "550e8400-e29b-41d4-a716-446655440000";
 let 默认节点名称 = "节点";
 
 let 我的优选 = [];
-let TXT_URL_ENV = "";
 let 我的优选TXT = [];  // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
 let 反代IP = ""; // 格式：地址:端口
@@ -24,12 +23,13 @@ export default {
     启用SOCKS5全局反代 = env.SOCKS5GLOBAL === "true" ? true : env.SOCKS5GLOBAL === "false" ? false : 启用SOCKS5全局反代;
     我的SOCKS5账号 = env.SOCKS5 || 我的SOCKS5账号;
 
-    TXT_URL_ENV = env.TXT_URL;
-    if (TXT_URL_ENV) {
-      if (typeof TXT_URL_ENV === 'string') {
-        我的优选TXT = TXT_URL_ENV.split('\n').map(line => line.trim()).filter(line => line);
-      } else if (Array.isArray(TXT_URL_ENV)) {
-        我的优选TXT = TXT_URL_ENV;
+    let env传入的URL = "";
+    env传入的URL = env.TXT_URL;
+    if (env传入的URL) {
+      if (typeof env传入的URL === 'string') {
+        我的优选TXT = env传入的URL.split('\n').map(line => line.trim()).filter(line => line);
+      } else if (Array.isArray(env传入的URL)) {
+        我的优选TXT = env传入的URL;
       } else {
         我的优选TXT = [];
       }
@@ -440,7 +440,7 @@ function clash配置文件(hostName) {
     socks5Valid = false; // 没有SOCKS5账号的时候, 也认为SOCKS5是无效的, 避免不必要的判断.
   }
 
-  const CF规则 = !socks5Valid && !反代IP ? '- GEOIP,CLOUDFLARE,🎯 直连规则' : ''; // 仅当SOCKS5无效的时候才使用CF规则
+  const CF规则 = !socks5Valid && !反代IP ? '- GEOIP,CLOUDFLARE,🎯 直连规则' : '';
 
   return `
 dns:
