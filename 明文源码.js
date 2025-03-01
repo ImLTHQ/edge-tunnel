@@ -8,10 +8,16 @@ let 默认节点名称 = "节点";
 let 我的优选 = [];
 let TXT_URL_ENV = "";
 let 我的优选TXT = [
-  "",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/Domain.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/HKG.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/KHH.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/NRT.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/LAX.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SEA.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
 ];  // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-let 反代IP = ""; // 格式：地址:端口
+let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = "";  // 格式：账号:密码@地址:端口
@@ -440,7 +446,7 @@ proxy-groups:
   proxies:
     - ♻️ 自动选择
 ${代理配置}
-- name: 🎯 CF和国内直连
+- name: 🎯 国内直连
   type: select
   proxies:
     - DIRECT
@@ -453,9 +459,11 @@ ${代理配置}
   proxies:
 ${代理配置}
 rules:
-  - GEOIP,lan,DIRECT
-  - GEOIP,cloudflare,🎯 CF和国内直连
-  - GEOIP,cn,🎯 CF和国内直连
+  - GEOIP,LAN,DIRECT
+  - GEOSITE,category-ads-all,REJECT
+  - GEOSITE,cn,🎯 国内直连
+  - GEOIP,cn,🎯 国内直连
+  - DOMAIN-SUFFIX,cn,🎯 国内直连
   - MATCH,🚀 节点选择
 `;
 }
