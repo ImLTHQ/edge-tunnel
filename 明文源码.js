@@ -7,9 +7,17 @@ let 默认节点名称 = "节点";
 
 let 我的优选 = [];
 let TXT_URL_ENV = "";
-let 我的优选TXT = [];  // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
+let 我的优选TXT = [
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/Domain.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/HKG.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/KHH.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/NRT.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/LAX.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SEA.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
+];  // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-let 反代IP = ""; // 格式：地址:端口
+let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = "";  // 格式：账号:密码@地址:端口
@@ -21,20 +29,13 @@ export default {
     我的UUID = env.SUB_UUID || 我的UUID;
     默认节点名称 = env.SUB_NAME || 默认节点名称;
     反代IP = env.PROXY_IP || 反代IP;
-    启用SOCKS5全局反代 =
-      env.SOCKS5GLOBAL === "true"
-        ? true
-        : env.SOCKS5GLOBAL === "false"
-        ? false
-        : 启用SOCKS5全局反代;
+    启用SOCKS5全局反代 = env.SOCKS5GLOBAL === "true" ? true : env.SOCKS5GLOBAL === "false" ? false : 启用SOCKS5全局反代;
     我的SOCKS5账号 = env.SOCKS5 || 我的SOCKS5账号;
 
     TXT_URL_ENV = env.TXT_URL;
     if (TXT_URL_ENV) {
-      if (typeof TXT_URL_ENV === "string") {
-        我的优选TXT = TXT_URL_ENV.split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line);
+      if (typeof TXT_URL_ENV === 'string') {
+        我的优选TXT = TXT_URL_ENV.split('\n').map(line => line.trim()).filter(line => line);
       } else if (Array.isArray(TXT_URL_ENV)) {
         我的优选TXT = TXT_URL_ENV;
       } else {
@@ -66,7 +67,7 @@ export default {
         // 去重处理
         我的优选 = [...new Set(我的优选)];
       }
-
+      
       const 最终订阅路径 = encodeURIComponent(订阅路径);
       if (url.pathname === `/${最终订阅路径}`) {
         const 用户代理 = 访问请求.headers.get("User-Agent").toLowerCase();
@@ -170,18 +171,12 @@ async function 解析VL标头(VL数据, TCP接口) {
         } catch {
           if (反代IP) {
             let [反代IP地址, 反代IP端口] = 反代IP.split(":");
-            TCP接口 = connect({
-              hostname: 反代IP地址,
-              port: 反代IP端口 || 访问端口,
-            });
+            TCP接口 = connect({ hostname: 反代IP地址, port: 反代IP端口 || 访问端口 });
           }
         }
       } else if (反代IP) {
         let [反代IP地址, 反代IP端口] = 反代IP.split(":");
-        TCP接口 = connect({
-          hostname: 反代IP地址,
-          port: 反代IP端口 || 访问端口,
-        });
+        TCP接口 = connect({ hostname: 反代IP地址, port: 反代IP端口 || 访问端口 });
       }
     }
   }
@@ -435,7 +430,7 @@ function clash配置文件(hostName) {
   const 代理配置 = 生成节点(我的优选)
     .map((node) => node.proxyConfig)
     .join("\n");
-  const CF规则 = !反代IP && !我的SOCKS5账号 ? '  - GEOIP,CLOUDFLARE,🎯 直连规则' : '';
+    const CF规则 = !反代IP && !我的SOCKS5账号 ? '- GEOIP,CLOUDFLARE,🎯 直连规则' : '';
   return `
 dns:
   nameserver:
@@ -465,9 +460,9 @@ ${代理配置}
   proxies:
 ${代理配置}
 rules:
-${CF规则}
   - GEOIP,lan,DIRECT
   - GEOIP,cn,🎯 直连规则
+  ${CF规则}
   - MATCH,🚀 节点选择
 `;
 }
