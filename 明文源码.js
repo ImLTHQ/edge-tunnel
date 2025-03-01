@@ -7,12 +7,11 @@ let 默认节点名称 = "节点";
 
 let 我的优选 = [];
 let TXT_URL_ENV = "";
-let 我的优选TXT = [];  // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
+let 我的优选TXT = []; // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
-
+let 反代IP = ""; // 格式：地址:端口  修改为 ""
 let 启用SOCKS5全局反代 = false;
-let 我的SOCKS5账号 = "";  // 格式：账号:密码@地址:端口
+let 我的SOCKS5账号 = ""; // 格式：账号:密码@地址:端口  修改为 ""
 
 // 网页入口
 export default {
@@ -21,13 +20,20 @@ export default {
     我的UUID = env.SUB_UUID || 我的UUID;
     默认节点名称 = env.SUB_NAME || 默认节点名称;
     反代IP = env.PROXY_IP || 反代IP;
-    启用SOCKS5全局反代 = env.SOCKS5GLOBAL === "true" ? true : env.SOCKS5GLOBAL === "false" ? false : 启用SOCKS5全局反代;
+    启用SOCKS5全局反代 =
+      env.SOCKS5GLOBAL === "true"
+        ? true
+        : env.SOCKS5GLOBAL === "false"
+        ? false
+        : 启用SOCKS5全局反代;
     我的SOCKS5账号 = env.SOCKS5 || 我的SOCKS5账号;
 
     TXT_URL_ENV = env.TXT_URL;
     if (TXT_URL_ENV) {
-      if (typeof TXT_URL_ENV === 'string') {
-        我的优选TXT = TXT_URL_ENV.split('\n').map(line => line.trim()).filter(line => line);
+      if (typeof TXT_URL_ENV === "string") {
+        我的优选TXT = TXT_URL_ENV.split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line);
       } else if (Array.isArray(TXT_URL_ENV)) {
         我的优选TXT = TXT_URL_ENV;
       } else {
@@ -59,7 +65,7 @@ export default {
         // 去重处理
         我的优选 = [...new Set(我的优选)];
       }
-      
+
       const 最终订阅路径 = encodeURIComponent(订阅路径);
       if (url.pathname === `/${最终订阅路径}`) {
         const 用户代理 = 访问请求.headers.get("User-Agent").toLowerCase();
@@ -84,6 +90,7 @@ export default {
     }
   },
 };
+
 // 脚本主要架构
 //第一步，读取和构建基础访问结构
 async function 升级WS请求(访问请求) {
@@ -94,20 +101,33 @@ async function 升级WS请求(访问请求) {
     "sec-websocket-protocol"
   );
   const 解密数据 = 使用64位加解密(读取我的加密访问内容数据头); //解密目标访问数据，传递给TCP握手进程
-  const { TCP接口, 写入初始数据 } = await 解析VL标头(解密数据); //解析VL数据并进行TCP握手
-  建立传输管道(WS接口, TCP接口, 写入初始数据);
-  return new Response(null, { status: 101, webSocket: 客户端 });
+  let TCP接口; // 声明 TCP接口 变量
+  try {
+    const { TCP接口: _TCP接口, 写入初始数据 } = await 解析VL标头(解密数据); //解析VL数据并进行TCP握手
+    TCP接口 = _TCP接口; // 赋值 TCP接口 变量
+    建立传输管道(WS接口, TCP接口, 写入初始数据);
+    return new Response(null, { status: 101, webSocket: 客户端 });
+  } catch (error) {
+    console.error("升级WS请求失败:", error);
+    // 向客户端发送错误信息
+    WS接口.send("连接失败，请检查配置");
+    WS接口.close();
+    return;
+  }
 }
+
 function 使用64位加解密(还原混淆字符) {
   还原混淆字符 = 还原混淆字符.replace(/-/g, "+").replace(/_/g, "/");
   const 解密数据 = atob(还原混淆字符);
   const 解密 = Uint8Array.from(解密数据, (c) => c.charCodeAt(0));
   return 解密.buffer;
 }
+
 //第二步，解读VL协议数据，创建TCP握手
-async function 解析VL标头(VL数据, TCP接口) {
+async function 解析VL标头(VL数据) {
+  let TCP接口;
   if (验证VL的密钥(new Uint8Array(VL数据.slice(1, 17))) !== 我的UUID) {
-    return null;
+    throw new Error("UUID 验证失败");
   }
   const 获取数据定位 = new Uint8Array(VL数据)[17];
   const 提取端口索引 = 18 + 获取数据定位 + 1;
@@ -150,30 +170,60 @@ async function 解析VL标头(VL数据, TCP接口) {
       break;
   }
   const 写入初始数据 = VL数据.slice(地址信息索引 + 地址长度);
-  if (启用SOCKS5全局反代 && 我的SOCKS5账号) {
-    TCP接口 = await 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口);
-  } else {
-    try {
-      TCP接口 = connect({ hostname: 访问地址, port: 访问端口 });
-      await TCP接口.opened;
-    } catch {
-      if (我的SOCKS5账号) {
-        try {
-          TCP接口 = await 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口);
-        } catch {
-          if (反代IP) {
+
+  try {
+    TCP接口 = connect({ hostname: 访问地址, port: 访问端口 });
+    await TCP接口.opened;
+  } catch (error) {
+    // 合并 SOCKS5 和反代 IP 的判断条件
+    if (启用SOCKS5全局反代 && 我的SOCKS5账号) {
+      try {
+        TCP接口 = await 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口);
+      } catch (socks5Error) {
+        console.error("SOCKS5 连接失败:", socks5Error); // 记录 SOCKS5 连接失败的日志
+        if (反代IP) {
+          try {
             let [反代IP地址, 反代IP端口] = 反代IP.split(":");
-            TCP接口 = connect({ hostname: 反代IP地址, port: 反代IP端口 || 访问端口 });
+            TCP接口 = connect({
+              hostname: 反代IP地址,
+              port: 反代IP端口 || 访问端口,
+            });
+            await TCP接口.opened;
+          } catch (proxyError) {
+            console.error("反代连接失败:", proxyError); // 记录反代连接失败的日志
+            throw new Error("所有连接方式都失败", {
+              cause: [error, socks5Error, proxyError],
+            }); // 抛出一个异常
           }
+        } else {
+          throw new Error("所有连接方式都失败", {
+            cause: [error, socks5Error],
+          }); // 抛出一个异常
         }
-      } else if (反代IP) {
-        let [反代IP地址, 反代IP端口] = 反代IP.split(":");
-        TCP接口 = connect({ hostname: 反代IP地址, port: 反代IP端口 || 访问端口 });
       }
+    } else if (反代IP) {
+      try {
+        let [反代IP地址, 反代IP端口] = 反代IP.split(":");
+        TCP接口 = connect({
+          hostname: 反代IP地址,
+          port: 反代IP端口 || 访问端口,
+        });
+        await TCP接口.opened;
+      } catch (proxyError) {
+        console.error("反代连接失败:", proxyError); // 记录反代连接失败的日志
+        throw new Error("所有连接方式都失败", { cause: [error, proxyError] }); // 抛出一个异常
+      }
+    } else {
+      // 没有可用的 SOCKS5 账号和反代 IP， 抛出一个异常
+      console.error("直接连接失败:", error); // 记录直接连接失败的日志
+      throw new Error("直接连接失败，且没有可用的 SOCKS5 账号和反代 IP", {
+        cause: error,
+      });
     }
   }
   return { TCP接口, 写入初始数据 };
 }
+
 function 验证VL的密钥(arr, offset = 0) {
   const uuid = (
     转换密钥格式[arr[offset + 0]] +
@@ -199,10 +249,12 @@ function 验证VL的密钥(arr, offset = 0) {
   ).toLowerCase();
   return uuid;
 }
+
 const 转换密钥格式 = [];
 for (let i = 0; i < 256; ++i) {
   转换密钥格式.push((i + 256).toString(16).slice(1));
 }
+
 //第三步，创建客户端WS-CF-目标的传输通道并监听状态
 async function 建立传输管道(WS接口, TCP接口, 写入初始数据) {
   const 传输数据 = TCP接口.writable.getWriter();
@@ -242,6 +294,7 @@ async function 建立传输管道(WS接口, TCP接口, 写入初始数据) {
     })
   );
 }
+
 // SOCKS5部分
 async function 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口) {
   const { username, password, hostname, port } = await 获取SOCKS5账号(
@@ -329,6 +382,7 @@ async function 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口
     return new Response("SOCKS5握手失败", { status: 400 });
   }
 }
+
 async function 获取SOCKS5账号(SOCKS5) {
   const [latter, former] = SOCKS5.split("@").reverse();
   let username, password, hostname, port;
@@ -342,6 +396,7 @@ async function 获取SOCKS5账号(SOCKS5) {
   hostname = latters.join(":");
   return { username, password, hostname, port };
 }
+
 // 订阅页面
 function 提示界面() {
   return `请把链接导入clash或v2ray`;
