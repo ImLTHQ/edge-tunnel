@@ -6,7 +6,16 @@ let 我的UUID = "550e8400-e29b-41d4-a716-446655440000";
 let 默认节点名称 = "节点";
 
 let 我的优选 = [];
-let 我的优选TXT = [];  // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
+let 我的优选TXT = [
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/Domain.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/HKG.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/KHH.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/NRT.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/LAX.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SEA.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
+];  // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
+
 
 let 反代IP = ""; // 格式：地址:端口
 
