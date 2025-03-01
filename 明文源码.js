@@ -428,26 +428,37 @@ function 测试SOCKS5和反代IP() {
 }
 
 function v2ray配置文件(hostName) {
+  const { socks5Valid, proxyIPValid } = 测试SOCKS5和反代IP();
+  let nodes = [];
+
+  if (!socks5Valid && !proxyIPValid) {
+    nodes.push(`socks://${我的SOCKS5账号}@127.0.0.1:1080#无法访问CF CDN，请设置反代`);
+  }
+
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
   }
-  return 我的优选
+
+  const generatedNodes = 我的优选
     .map((获取优选) => {
       const [地址端口, 节点名字 = 默认节点名称] = 获取优选.split("#");
       const 拆分地址端口 = 地址端口.split(":");
       const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
       const 地址 = 拆分地址端口.join(":");
       return `vless://${我的UUID}@${地址}:${端口}?encryption=none&security=tls&sni=${hostName}&fp=chrome&type=ws&host=${hostName}&path=%2F%3Fed%3D2560#${节点名字}`;
-    })
-    .join("\n");
+    });
+  
+  return nodes.concat(generatedNodes).join("\n"); // 将 "无法访问CF CDN"添加到最前面
 }
 
+
 function clash配置文件(hostName) {
-  if (我的优选.length === 0) {
-    我的优选 = [`${hostName}:443`];
-  }
-  const 生成节点 = (我的优选) => {
-    return 我的优选.map((获取优选, index) => {
+  const { socks5Valid, proxyIPValid } = 测试SOCKS5和反代IP();
+  let 节点配置 = "";
+  let 代理配置 = "";
+
+  const 生成节点 = (nodesArray) => {
+    return nodesArray.map((获取优选, index) => {
       const [地址端口, 节点名字 = `${默认节点名称} ${index + 1}`] =
         获取优选.split("#");
       const 拆分地址端口 = 地址端口.split(":");
@@ -473,14 +484,28 @@ function clash配置文件(hostName) {
       };
     });
   };
-  const 节点配置 = 生成节点(我的优选)
-    .map((node) => node.nodeConfig)
-    .join("\n");
-  const 代理配置 = 生成节点(我的优选)
-    .map((node) => node.proxyConfig)
-    .join("\n");
+  
+  if (我的优选.length === 0) {
+      我的优选 = [`${hostName}:443`];
+    }
 
-  const { socks5Valid, proxyIPValid } = 测试SOCKS5和反代IP();
+  if (!socks5Valid && !proxyIPValid) {
+    // 添加 "无法访问CF CDN，请设置反代" 节点
+    节点配置 += `- name: 无法访问CF CDN，请设置反代
+  type: socks5
+  server: 127.0.0.1
+  port: 1080  # 替换为你的 SOCKS5 端口 (通常是1080或10808)
+  #username: your_username
+  #password: your_password
+\n`;
+    代理配置 += "    - 无法访问CF CDN，请设置反代\n";
+  }
+
+  const generatedNodes = 生成节点(我的优选);
+  节点配置 += generatedNodes.map((node) => node.nodeConfig).join("\n");
+  代理配置 += generatedNodes.map((node) => node.proxyConfig).join("\n");
+
+
   const CF规则 = !socks5Valid && !proxyIPValid ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
@@ -497,6 +522,7 @@ proxy-groups:
 - name: 🚀 节点选择
   type: select
   proxies:
+    - 无法访问CF CDN，请设置反代
     - ♻️ 自动选择
 ${代理配置}
 - name: 🎯 直连规则
@@ -512,11 +538,11 @@ ${代理配置}
   proxies:
 ${代理配置}
 rules:
-  - GEOIP,lan,DIRECT
+  ${CF规则}
   - GEOIP,cn,🎯 直连规则
   - GEOSITE,cn,🎯 直连规则
   - DOMAIN-SUFFIX,cn,🎯 直连规则
-  ${CF规则}
+  - GEOIP,lan,DIRECT
   - MATCH,🚀 节点选择
 `;
 }
