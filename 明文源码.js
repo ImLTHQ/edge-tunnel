@@ -445,8 +445,9 @@ function clash配置文件(hostName) {
     .map((node) => node.proxyConfig)
     .join("\n");
 
-  // SOCKS5 和反代 IP都无效时加入CF直连规则
+  // SOCKS5和反代IP都无效时加入CF直连规则
   let socks5Valid = true;
+  let proxyIPValid = true;
 
   if (我的SOCKS5账号) {
     try {
@@ -461,7 +462,22 @@ function clash配置文件(hostName) {
   } else {
     socks5Valid = false; // 没有SOCKS5账号的时候, 也认为SOCKS5是无效的
   }
-  const CF规则 = !socks5Valid && !反代IP ? '- GEOIP,cloudflare,🎯 直连规则' : '';
+
+  if (反代IP) {
+    try {
+      const [反代IP地址, 反代IP端口] = 反代IP.split(":");
+      // 尝试连接反代IP:端口, 简单的验证下反代IP是否可用
+      const testSocket = connect({ hostname: 反代IP地址, port: 反代IP端口 || 443 });
+      testSocket.opened;
+      testSocket.close();
+      proxyIPValid = true; // 反代IP验证通过
+    } catch (error) {
+      console.log("反代IP 测试失败:", error);
+      proxyIPValid = false; // 反代IP验证失败
+    }
+  }
+
+  const CF规则 = !socks5Valid && !proxyIPValid ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
 dns:
