@@ -392,6 +392,41 @@ body {
   );
 }
 
+// 测试SOCKS5和反代IP是否有效
+function 测试SOCKS5和反代IP() {
+  let socks5Valid = true;
+  let proxyIPValid = true;
+
+  if (我的SOCKS5账号) {
+    try {
+      const { hostname, port } = 获取SOCKS5账号(我的SOCKS5账号);
+      const testSocket = connect({ hostname: hostname, port: port });
+      testSocket.opened;
+      testSocket.close();
+    } catch (error) {
+      console.log("SOCKS5 测试失败:", error);
+      socks5Valid = false;
+    }
+  } else {
+    socks5Valid = false;
+  }
+
+  if (反代IP) {
+    try {
+      const [反代IP地址, 反代IP端口] = 反代IP.split(":");
+      const testSocket = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
+      testSocket.opened;
+      testSocket.close();
+      proxyIPValid = true;
+    } catch (error) {
+      console.log("反代IP 测试失败:", error);
+      proxyIPValid = false;
+    }
+  }
+
+  return { socks5Valid, proxyIPValid };
+}
+
 function v2ray配置文件(hostName) {
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
@@ -445,38 +480,7 @@ function clash配置文件(hostName) {
     .map((node) => node.proxyConfig)
     .join("\n");
 
-  // SOCKS5和反代IP都无效时加入CF直连规则
-  let socks5Valid = true;
-  let proxyIPValid = true;
-
-  if (我的SOCKS5账号) {
-    try {
-      const { hostname, port } = 获取SOCKS5账号(我的SOCKS5账号);
-      const testSocket = connect({ hostname: hostname, port: port });
-      testSocket.opened;
-      testSocket.close();
-    } catch (error) {
-      console.log("SOCKS5 测试失败:", error);
-      socks5Valid = false;
-    }
-  } else {
-    socks5Valid = false;
-  }
-
-  if (反代IP) {
-    try {
-      const [反代IP地址, 反代IP端口] = 反代IP.split(":");
-      // 尝试连接反代IP:端口, 简单的验证下反代IP是否可用
-      const testSocket = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
-      testSocket.opened;
-      testSocket.close();
-      proxyIPValid = true;
-    } catch (error) {
-      console.log("反代IP 测试失败:", error);
-      proxyIPValid = false;
-    }
-  }
-
+  const { socks5Valid, proxyIPValid } = 测试SOCKS5和反代IP();
   const CF规则 = !socks5Valid && !proxyIPValid ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
