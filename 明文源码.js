@@ -460,7 +460,7 @@ function clash配置文件(hostName) {
       socks5Valid = false;
     }
   } else {
-    socks5Valid = false; // 没有SOCKS5账号的时候, 也认为SOCKS5是无效的
+    socks5Valid = false;
   }
 
   if (反代IP) {
