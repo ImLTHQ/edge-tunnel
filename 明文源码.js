@@ -7,17 +7,9 @@ let 默认节点名称 = "节点";
 
 let 我的优选 = [];
 let TXT_URL_ENV = "";
-let 我的优选TXT = [
-  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/Domain.txt",
-  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/HKG.txt",
-  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/KHH.txt",
-  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/NRT.txt",
-  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/LAX.txt",
-  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SEA.txt",
-  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
-];  // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
+let 我的优选TXT = [];  // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
+let 反代IP = ""; // 格式：地址:端口
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = "";  // 格式：账号:密码@地址:端口
@@ -430,7 +422,26 @@ function clash配置文件(hostName) {
   const 代理配置 = 生成节点(我的优选)
     .map((node) => node.proxyConfig)
     .join("\n");
-    const CF规则 = !反代IP && !我的SOCKS5账号 ? '- GEOIP,CLOUDFLARE,🎯 直连规则' : '';
+
+  // 测试 SOCKS5 和反代 IP
+  let socks5Valid = true; // 假设SOCKS5默认是正常的
+
+  if (我的SOCKS5账号) {
+    try {
+      const { hostname, port } = 获取SOCKS5账号(我的SOCKS5账号);
+      const testSocket = connect({ hostname: hostname, port: port });
+      testSocket.opened;
+      testSocket.close();
+    } catch (error) {
+      console.log("SOCKS5 测试失败:", error);
+      socks5Valid = false; // 如果SOCKS5连接失败,则设置为false
+    }
+  } else {
+    socks5Valid = false; // 没有SOCKS5账号的时候, 也认为SOCKS5是无效的, 避免不必要的判断.
+  }
+
+  const CF规则 = !socks5Valid && !反代IP ? '- GEOIP,CLOUDFLARE,🎯 直连规则' : ''; // 仅当SOCKS5无效的时候才使用CF规则
+
   return `
 dns:
   nameserver:
