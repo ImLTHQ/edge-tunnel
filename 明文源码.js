@@ -61,7 +61,7 @@ export default {
 
       const { SOCKS5有效, 反代IP有效 } = 测试SOCKS5和反代IP();
       if (!SOCKS5有效 && !反代IP有效) {
-        我的优选.unshift("127.0.0.1#SOCKS55或PROXY_IP出错，可能无法访问CF CDN");
+        我的优选.unshift("127.0.0.1#Socks5或反代IP出错，无法访问CF CDN");
       }
 
       const 最终订阅路径 = encodeURIComponent(订阅路径);
