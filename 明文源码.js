@@ -23,7 +23,7 @@ let 我的SOCKS5账号 = ""; // 格式：账号:密码@地址:端口
 
 // 网页入口
 export default {
-  fetch(访问请求, env) {
+  async fetch(访问请求, env) {
     订阅路径 = env.SUB_PATH || 订阅路径;
     我的UUID = env.SUB_UUID || 我的UUID;
     默认节点名称 = env.SUB_NAME || 默认节点名称;
@@ -56,7 +56,7 @@ export default {
     if (!读取我的请求标头 || 读取我的请求标头 !== "websocket") {
       if (我的优选TXT.length > 0) {
         我的优选 = (
-          Promise.all(
+          await Promise.all(
             我的优选TXT.map((url) =>
               fetch(url).then((response) =>
                 response.ok
@@ -101,13 +101,13 @@ export default {
         return 生成项目介绍页面();
       }
     } else if (读取我的请求标头 === "websocket") {
-      return 升级WS请求(访问请求);
+      return await 升级WS请求(访问请求);
     }
   },
 };
 // 脚本主要架构
 //第一步，读取和构建基础访问结构
-function 升级WS请求(访问请求) {
+async function 升级WS请求(访问请求) {
   const 创建WS接口 = new WebSocketPair();
   const [客户端, WS接口] = Object.values(创建WS接口);
   WS接口.accept();
@@ -115,7 +115,7 @@ function 升级WS请求(访问请求) {
     "sec-websocket-protocol"
   );
   const 解密数据 = 使用64位加解密(读取我的加密访问内容数据头); //解密目标访问数据，传递给TCP握手进程
-  const { TCP接口, 写入初始数据 } = 解析VL标头(解密数据); //解析VL数据并进行TCP握手
+  const { TCP接口, 写入初始数据 } = await 解析VL标头(解密数据); //解析VL数据并进行TCP握手
   建立传输管道(WS接口, TCP接口, 写入初始数据);
   return new Response(null, { status: 101, webSocket: 客户端 });
 }
