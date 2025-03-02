@@ -485,18 +485,27 @@ proxy-groups:
 - name: 🚀 节点选择
   type: select
   proxies:
-    - ♻️ 自动选择
+    - ♻️ 延迟优选
+    - 🔯 故障转移
 ${代理配置}
 - name: 🎯 直连规则
   type: select
   proxies:
     - DIRECT
     - 🚀 节点选择
-- name: ♻️ 自动选择
+- name: ♻️ 延迟优选
   type: url-test
   url: https://www.google.com/generate_204
   interval: 300
   tolerance: 100
+  proxies:
+${代理配置}
+- name: 🔯 故障转移
+  type: fallback
+  health-check:
+    enable: true
+    interval: 300
+    url: https://www.google.com/generate_204
   proxies:
 ${代理配置}
 rules:
