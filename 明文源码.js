@@ -16,19 +16,18 @@ let 我的优选TXT = [
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
 ]; // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-let 反代IP = ["ts.hpc.tw:443"]; // 格式：地址:端口
+let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = ""; // 格式：账号:密码@地址:端口
 
 // 网页入口
 export default {
-  async fetch(访问请求, env) {
+  fetch(访问请求, env) {
     订阅路径 = env.SUB_PATH || 订阅路径;
     我的UUID = env.SUB_UUID || 我的UUID;
     默认节点名称 = env.SUB_NAME || 默认节点名称;
-    反代IP = env.PROXY_IP ? env.PROXY_IP.split("\n") : 反代IP;  // 允许通过换行符分隔的环境变量配置多个反代IP
-    反代IP = 反代IP.map(ip => ip.trim()).filter(ip => ip); // 清理空格和空行
+    反代IP = env.PROXY_IP || 反代IP;
     启用SOCKS5全局反代 =
       env.SOCKS5GLOBAL === "true"
         ? true
@@ -57,7 +56,7 @@ export default {
     if (!读取我的请求标头 || 读取我的请求标头 !== "websocket") {
       if (我的优选TXT.length > 0) {
         我的优选 = (
-          await Promise.all(
+          Promise.all(
             我的优选TXT.map((url) =>
               fetch(url).then((response) =>
                 response.ok
@@ -102,13 +101,13 @@ export default {
         return 生成项目介绍页面();
       }
     } else if (读取我的请求标头 === "websocket") {
-      return await 升级WS请求(访问请求);
+      return 升级WS请求(访问请求);
     }
   },
 };
 // 脚本主要架构
 //第一步，读取和构建基础访问结构
-async function 升级WS请求(访问请求) {
+function 升级WS请求(访问请求) {
   const 创建WS接口 = new WebSocketPair();
   const [客户端, WS接口] = Object.values(创建WS接口);
   WS接口.accept();
@@ -116,7 +115,7 @@ async function 升级WS请求(访问请求) {
     "sec-websocket-protocol"
   );
   const 解密数据 = 使用64位加解密(读取我的加密访问内容数据头); //解密目标访问数据，传递给TCP握手进程
-  const { TCP接口, 写入初始数据 } = await 解析VL标头(解密数据); //解析VL数据并进行TCP握手
+  const { TCP接口, 写入初始数据 } = 解析VL标头(解密数据); //解析VL数据并进行TCP握手
   建立传输管道(WS接口, TCP接口, 写入初始数据);
   return new Response(null, { status: 101, webSocket: 客户端 });
 }
@@ -183,39 +182,25 @@ async function 解析VL标头(VL数据, TCP接口) {
         try {
           TCP接口 = await 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口);
         } catch {
-          if (反代IP && 反代IP.length > 0) {
-            TCP接口 = await 尝试多个反代IP(反代IP);
+          if (反代IP) {
+            let [反代IP地址, 反代IP端口] = 反代IP.split(":");
+            TCP接口 = connect({
+              hostname: 反代IP地址,
+              port: Number(反代IP端口) || 443,
+            });
           }
         }
-      } else if (反代IP && 反代IP.length > 0) {
-        TCP接口 = await 尝试多个反代IP(反代IP);
+      } else if (反代IP) {
+        let [反代IP地址, 反代IP端口] = 反代IP.split(":");
+        TCP接口 = connect({
+          hostname: 反代IP地址,
+          port: Number(反代IP端口) || 443,
+        });
       }
     }
   }
   return { TCP接口, 写入初始数据 };
 }
-
-// 尝试连接多个反代 IP
-async function 尝试多个反代IP(反代IP数组) {
-  for (const ip of 反代IP数组) {
-    try {
-      let [反代IP地址, 反代IP端口] = ip.split(":");
-      const TCP接口 = connect({
-        hostname: 反代IP地址,
-        port: Number(反代IP端口) || 443,
-      });
-      await TCP接口.opened;
-      console.log(`成功连接反代IP: ${ip}`);
-      return TCP接口; // 成功连接，返回接口
-    } catch (error) {
-      console.log(`连接反代IP ${ip} 失败: ${error}`);
-      // 继续尝试下一个IP
-    }
-  }
-  throw new Error("所有反代IP连接失败"); // 所有IP都连接失败
-}
-
-
 function 验证VL的密钥(arr, offset = 0) {
   const uuid = (
     转换密钥格式[arr[offset + 0]] +
@@ -430,16 +415,13 @@ function 测试SOCKS5和反代IP() {
     socks5Valid = false;
   }
 
-  if (反代IP && 反代IP.length > 0) {
+  if (反代IP) {
     try {
-        for (const ip of 反代IP) {
-            const [反代IP地址, 反代IP端口] = ip.split(":");
-            const testSocket = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
-            testSocket.opened;
-            testSocket.close();
-            proxyIPValid = true;
-            break; // 只要有一个能连通，就认为是有效的
-        }
+      const [反代IP地址, 反代IP端口] = 反代IP.split(":");
+      const testSocket = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
+      testSocket.opened;
+      testSocket.close();
+      proxyIPValid = true;
     } catch (error) {
       proxyIPValid = false;
     }
