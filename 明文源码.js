@@ -16,7 +16,8 @@ let 我的优选TXT = [
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
 ]; // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-let 反代IP = ["ts.hpc.tw:443"]; // 格式：地址:端口
+let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
+
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = ""; // 格式：账号:密码@地址:端口
 
@@ -26,14 +27,7 @@ export default {
     订阅路径 = env.SUB_PATH || 订阅路径;
     我的UUID = env.SUB_UUID || 我的UUID;
     默认节点名称 = env.SUB_NAME || 默认节点名称;
-
-    // 将环境变量中的反代IP转换为数组
-    if (env.PROXY_IP) {
-      反代IP = env.PROXY_IP.split("\n")
-        .map((ip) => ip.trim())
-        .filter((ip) => ip);
-    }
-
+    反代IP = env.PROXY_IP || 反代IP;
     启用SOCKS5全局反代 =
       env.SOCKS5GLOBAL === "true"
         ? true
@@ -61,25 +55,14 @@ export default {
     const url = new URL(访问请求.url);
     if (!读取我的请求标头 || 读取我的请求标头 !== "websocket") {
       if (我的优选TXT.length > 0) {
-        我的优选 = (
-          await Promise.all(
-            我的优选TXT.map((url) =>
-              fetch(url).then((response) =>
-                response.ok
-                  ? response.text().then((text) =>
-                      text
-                        .split("\n")
-                        .map((line) => line.trim())
-                        .filter((line) => line)
-                    )
-                  : []
-              )
-            )
-          )
-        ).flat();
-
-        // 去重处理
-        我的优选 = [...new Set(我的优选)];
+        我的优选 = [...new Set(
+          (await Promise.all(
+            我的优选TXT.map(async (url) => {
+              const response = await fetch(url);
+              return response.ok ? (await response.text()).split("\n").map(line => line.trim()).filter(line => line) : [];
+            })
+          )).flat()
+        )];
       }
 
       const { socks5Valid, proxyIPValid } = 测试SOCKS5和反代IP();
@@ -188,22 +171,16 @@ async function 解析VL标头(VL数据, TCP接口) {
         try {
           TCP接口 = await 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口);
         } catch {
-          if (反代IP && 反代IP.length > 0) {
-            // 随机选择一个反代IP
-            const randomIndex = Math.floor(Math.random() * 反代IP.length);
-            const selectedProxyIP = 反代IP[randomIndex];
-            let [反代IP地址, 反代IP端口] = selectedProxyIP.split(":");
+          if (反代IP) {
+            let [反代IP地址, 反代IP端口] = 反代IP.split(":");
             TCP接口 = connect({
               hostname: 反代IP地址,
               port: Number(反代IP端口) || 443,
             });
           }
         }
-      } else if (反代IP && 反代IP.length > 0) {
-        // 随机选择一个反代IP
-        const randomIndex = Math.floor(Math.random() * 反代IP.length);
-        const selectedProxyIP = 反代IP[randomIndex];
-        let [反代IP地址, 反代IP端口] = selectedProxyIP.split(":");
+      } else if (反代IP) {
+        let [反代IP地址, 反代IP端口] = 反代IP.split(":");
         TCP接口 = connect({
           hostname: 反代IP地址,
           port: Number(反代IP端口) || 443,
@@ -427,21 +404,18 @@ function 测试SOCKS5和反代IP() {
     socks5Valid = false;
   }
 
-  if (反代IP && 反代IP.length > 0) {
-    // 检查所有反代IP是否有效
-    proxyIPValid = 反代IP.every(ip => {
-      try {
-        const [反代IP地址, 反代IP端口] = ip.split(":");
-        const testSocket = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
-        testSocket.opened;
-        testSocket.close();
-        return true;
-      } catch (error) {
-        return false;
-      }
-    });
+  if (反代IP) {
+    try {
+      const [反代IP地址, 反代IP端口] = 反代IP.split(":");
+      const testSocket = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
+      testSocket.opened;
+      testSocket.close();
+      proxyIPValid = true;
+    } catch (error) {
+      proxyIPValid = false;
+    }
   } else {
-    proxyIPValid = false;
+      proxyIPValid = false;
   }
 
   return { socks5Valid, proxyIPValid };
