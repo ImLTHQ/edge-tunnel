@@ -16,7 +16,8 @@ let 我的优选TXT = [
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
 ]; // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
+let 反代IP = ["ts.hpc.tw:443"]; // 格式：地址:端口， 可以是多个地址，换行分割
+let 反代IPIndex = 0; // 用于轮询反代IP的索引
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = ""; // 格式：账号:密码@地址:端口
@@ -27,7 +28,14 @@ export default {
     订阅路径 = env.SUB_PATH || 订阅路径;
     我的UUID = env.SUB_UUID || 我的UUID;
     默认节点名称 = env.SUB_NAME || 默认节点名称;
-    反代IP = env.PROXY_IP || 反代IP;
+
+    // 处理反代 IP 环境变量
+    if (env.PROXY_IP) {
+      反代IP = env.PROXY_IP.split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line);
+    }
+
     启用SOCKS5全局反代 =
       env.SOCKS5GLOBAL === "true"
         ? true
@@ -182,16 +190,22 @@ async function 解析VL标头(VL数据, TCP接口) {
         try {
           TCP接口 = await 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口);
         } catch {
-          if (反代IP) {
-            let [反代IP地址, 反代IP端口] = 反代IP.split(":");
+          if (反代IP && 反代IP.length > 0) {
+            // 轮询选择反代 IP
+            const currentProxyIP = 反代IP[反代IPIndex % 反代IP.length];
+            反代IPIndex++;
+            let [反代IP地址, 反代IP端口] = currentProxyIP.split(":");
             TCP接口 = connect({
               hostname: 反代IP地址,
               port: Number(反代IP端口) || 443,
             });
           }
         }
-      } else if (反代IP) {
-        let [反代IP地址, 反代IP端口] = 反代IP.split(":");
+      } else if (反代IP && 反代IP.length > 0) {
+        // 轮询选择反代 IP
+        const currentProxyIP = 反代IP[反代IPIndex % 反代IP.length];
+        反代IPIndex++;
+        let [反代IP地址, 反代IP端口] = currentProxyIP.split(":");
         TCP接口 = connect({
           hostname: 反代IP地址,
           port: Number(反代IP端口) || 443,
@@ -415,9 +429,10 @@ function 测试SOCKS5和反代IP() {
     socks5Valid = false;
   }
 
-  if (反代IP) {
+  if (反代IP && 反代IP.length > 0) {
     try {
-      const [反代IP地址, 反代IP端口] = 反代IP.split(":");
+      const currentProxyIP = 反代IP[反代IPIndex % 反代IP.length];
+      let [反代IP地址, 反代IP端口] = currentProxyIP.split(":");
       const testSocket = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
       testSocket.opened;
       testSocket.close();
@@ -426,7 +441,7 @@ function 测试SOCKS5和反代IP() {
       proxyIPValid = false;
     }
   } else {
-      proxyIPValid = false;
+    proxyIPValid = false;
   }
 
   return { socks5Valid, proxyIPValid };
