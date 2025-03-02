@@ -53,7 +53,7 @@ export default {
       } else if (Array.isArray(env传入的TXT_URL)) {
         我的优选TXT = env传入的TXT_URL;
       } else {
-        我的优选TXT = 我的优选TXT;
+        我的优选TXT = [];
       }
     }
 
