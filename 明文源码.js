@@ -456,7 +456,7 @@ function clash配置文件(hostName) {
   uuid: ${我的UUID}
   udp: true
   tls: true
-  sni: ${hostName}
+  servername: ${hostName}
   network: ws
   ws-opts:
     path: "/?ed=2560"
