@@ -27,7 +27,7 @@ export default {
     订阅路径 = env.SUB_PATH || 订阅路径;
     我的UUID = env.SUB_UUID || 我的UUID;
     默认节点名称 = env.SUB_NAME || 默认节点名称;
-    我的优选TXT = env.TXT_URL ? 字符串转数组(env.TXT_URL) : 我的优选TXT;
+    我的优选TXT = 字符串转数组(env.TXT_URL) || 我的优选TXT;
     反代IP = env.PROXY_IP || 反代IP;
     我的SOCKS5账号 = env.SOCKS5 || 我的SOCKS5账号;
     启用SOCKS5全局反代 =
