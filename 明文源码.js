@@ -16,13 +16,10 @@ let 我的优选TXT = [
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
 ]; // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-let 反代IP = ["ts.hpc.tw:443"]; // 格式：地址:端口  数组形式，支持多个反代IP
+let 反代IP = ["ts.hpc.tw:443"]; // 格式：地址:端口,可以多个
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = ""; // 格式：账号:密码@地址:端口
-
-// 用于轮询反代IP的索引
-let 反代IP索引 = 0;
 
 // 网页入口
 export default {
@@ -31,11 +28,11 @@ export default {
     我的UUID = env.SUB_UUID || 我的UUID;
     默认节点名称 = env.SUB_NAME || 默认节点名称;
 
-    // 从环境变量读取反代IP，并按换行符分割
+    // 读取反代IP，支持换行分隔
     if (env.PROXY_IP) {
       反代IP = env.PROXY_IP.split("\n")
-        .map((ip) => ip.trim())
-        .filter((ip) => ip); // 移除空字符串
+        .map((line) => line.trim())
+        .filter((line) => line);
     }
 
     启用SOCKS5全局反代 =
@@ -86,8 +83,10 @@ export default {
         我的优选 = [...new Set(我的优选)];
       }
 
-      const { socks5Valid, proxyIPValid } = 测试SOCKS5和反代IP(反代IP);
-      if (!socks5Valid && !proxyIPValid) {
+      const { socks5Valid, proxyIPValid, hasInvalidProxy } = await 测试SOCKS5和反代IP(反代IP, 我的SOCKS5账号);
+      if (!socks5Valid && hasInvalidProxy) {
+        我的优选.unshift("127.0.0.1#提供的反代IP中至少有一个无效");
+      } else if (!socks5Valid && !proxyIPValid) {
         我的优选.unshift("127.0.0.1#无法访问CF CDN 请设置反代");
       }
 
@@ -184,6 +183,7 @@ async function 解析VL标头(VL数据, TCP接口) {
   if (启用SOCKS5全局反代 && 我的SOCKS5账号) {
     TCP接口 = await 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口);
   } else {
+    let 可用的反代IP = 反代IP[Math.floor(Math.random() * 反代IP.length)];
     try {
       TCP接口 = connect({ hostname: 访问地址, port: 访问端口 });
       await TCP接口.opened;
@@ -192,22 +192,16 @@ async function 解析VL标头(VL数据, TCP接口) {
         try {
           TCP接口 = await 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口);
         } catch {
-          if (反代IP && 反代IP.length > 0) {
-            // 使用轮询的反代IP
-            const 当前反代IP = 反代IP[反代IP索引 % 反代IP.length];
-            反代IP索引++; // 增加索引，下次使用下一个IP
-            let [反代IP地址, 反代IP端口] = 当前反代IP.split(":");
+          if (可用的反代IP) {
+            let [反代IP地址, 反代IP端口] = 可用的反代IP.split(":");
             TCP接口 = connect({
               hostname: 反代IP地址,
               port: Number(反代IP端口) || 443,
             });
           }
         }
-      } else if (反代IP && 反代IP.length > 0) {
-        // 使用轮询的反代IP
-        const 当前反代IP = 反代IP[反代IP索引 % 反代IP.length];
-        反代IP索引++; // 增加索引，下次使用下一个IP
-        let [反代IP地址, 反代IP端口] = 当前反代IP.split(":");
+      } else if (可用的反代IP) {
+        let [反代IP地址, 反代IP端口] = 可用的反代IP.split(":");
         TCP接口 = connect({
           hostname: 反代IP地址,
           port: Number(反代IP端口) || 443,
@@ -414,41 +408,40 @@ body {
 }
 
 // 测试SOCKS5和反代IP是否有效
-function 测试SOCKS5和反代IP(反代IP) {
-  let socks5Valid = true;
-  let proxyIPValid = true;
+async function 测试SOCKS5和反代IP(反代IPs, 我的SOCKS5账号) {
+  let socks5Valid = false;
+  let proxyIPValid = false;
+  let hasInvalidProxy = false; // 新增：标记是否存在无效的反代 IP
 
+  // 测试 SOCKS5
   if (我的SOCKS5账号) {
     try {
-      const { hostname, port } = 获取SOCKS5账号(我的SOCKS5账号);
+      const { hostname, port } = await 获取SOCKS5账号(我的SOCKS5账号);
       const testSocket = connect({ hostname: hostname, port: port });
-      testSocket.opened;
+      await testSocket.opened;
       testSocket.close();
+      socks5Valid = true;
     } catch (error) {
       socks5Valid = false;
     }
-  } else {
-    socks5Valid = false;
   }
 
-  // 只要有一个反代IP无效，就返回false
-  if (反代IP && 反代IP.length > 0) {
-    for (const ip of 反代IP) {
+  // 测试反代IP
+  if (反代IPs && 反代IPs.length > 0) {
+    for (const 反代IP of 反代IPs) {
       try {
-        const [反代IP地址, 反代IP端口] = ip.split(":");
+        const [反代IP地址, 反代IP端口] = 反代IP.split(":");
         const testSocket = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
-        testSocket.opened;
+        await testSocket.opened;
         testSocket.close();
+        proxyIPValid = true;
       } catch (error) {
-        proxyIPValid = false;
-        break; // 只要一个IP无效，就跳出循环
+        hasInvalidProxy = true; // 标记存在无效的反代 IP
       }
     }
-  } else {
-    proxyIPValid = false;
   }
 
-  return { socks5Valid, proxyIPValid };
+  return { socks5Valid, proxyIPValid, hasInvalidProxy };
 }
 
 function v2ray配置文件(hostName) {
@@ -466,7 +459,7 @@ function v2ray配置文件(hostName) {
     .join("\n");
 }
 
-function clash配置文件(hostName) {
+async function clash配置文件(hostName) {
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
   }
@@ -504,7 +497,7 @@ function clash配置文件(hostName) {
     .map((node) => node.proxyConfig)
     .join("\n");
 
-  const { socks5Valid, proxyIPValid } = 测试SOCKS5和反代IP(反代IP);
+  const { socks5Valid, proxyIPValid, hasInvalidProxy } = await 测试SOCKS5和反代IP(反代IP, 我的SOCKS5账号);
   const CF规则 = !socks5Valid && !proxyIPValid ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
