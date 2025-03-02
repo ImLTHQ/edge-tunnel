@@ -21,6 +21,16 @@ let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = ""; // 格式：账号:密码@地址:端口
 
+function 字符串转数组(str) {
+  if (!str) {
+    return [];
+  }
+  return str
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line);
+}
+
 // 网页入口
 export default {
   async fetch(访问请求, env) {
@@ -36,18 +46,14 @@ export default {
         : 启用SOCKS5全局反代;
     我的SOCKS5账号 = env.SOCKS5 || 我的SOCKS5账号;
 
-    let env传入的TXT_URL = "";
-    env传入的TXT_URL = env.TXT_URL;
+    let env传入的TXT_URL = env.TXT_URL;
     if (env传入的TXT_URL) {
       if (typeof env传入的TXT_URL === "string") {
-        我的优选TXT = env传入的TXT_URL
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line);
+        我的优选TXT = 字符串转数组(env传入的TXT_URL);
       } else if (Array.isArray(env传入的TXT_URL)) {
         我的优选TXT = env传入的TXT_URL;
       } else {
-        我的优选TXT = [];
+        我的优选TXT = 我的优选TXT;
       }
     }
 
@@ -55,14 +61,20 @@ export default {
     const url = new URL(访问请求.url);
     if (!读取我的请求标头 || 读取我的请求标头 !== "websocket") {
       if (我的优选TXT.length > 0) {
-        我的优选 = [...new Set(
-          (await Promise.all(
-            我的优选TXT.map(async (url) => {
-              const response = await fetch(url);
-              return response.ok ? (await response.text()).split("\n").map(line => line.trim()).filter(line => line) : [];
-            })
-          )).flat()
-        )];
+        我的优选 = [
+          ...new Set(
+            (
+              await Promise.all(
+                我的优选TXT.map(async (url) => {
+                  const response = await fetch(url);
+                  return response.ok
+                    ? 字符串转数组(await response.text())
+                    : [];
+                })
+              )
+            ).flat()
+          ),
+        ];
       }
 
       const { socks5Valid, proxyIPValid } = 测试SOCKS5和反代IP();
@@ -94,6 +106,7 @@ export default {
     }
   },
 };
+
 // 脚本主要架构
 //第一步，读取和构建基础访问结构
 async function 升级WS请求(访问请求) {
