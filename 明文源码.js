@@ -27,6 +27,7 @@ export default {
     订阅路径 = env.SUB_PATH || 订阅路径;
     我的UUID = env.SUB_UUID || 我的UUID;
     默认节点名称 = env.SUB_NAME || 默认节点名称;
+    我的优选TXT = 字符串转数组(env.TXT_URL) || 我的优选TXT;
     反代IP = env.PROXY_IP || 反代IP;
     我的SOCKS5账号 = env.SOCKS5 || 我的SOCKS5账号;
     启用SOCKS5全局反代 =
@@ -35,21 +36,6 @@ export default {
         : env.SOCKS5GLOBAL === "false"
         ? false
         : 启用SOCKS5全局反代;
-
-    let env传入的TXT_URL = "";
-    env传入的TXT_URL = env.TXT_URL;
-    if (env传入的TXT_URL) {
-      if (typeof env传入的TXT_URL === "string") {
-        我的优选TXT = env传入的TXT_URL
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line);
-      } else if (Array.isArray(env传入的TXT_URL)) {
-        我的优选TXT = env传入的TXT_URL;
-      } else {
-        我的优选TXT = [];
-      }
-    }
 
     const 读取我的请求标头 = 访问请求.headers.get("Upgrade");
     const url = new URL(访问请求.url);
@@ -358,32 +344,15 @@ async function 获取SOCKS5账号(SOCKS5) {
   hostname = latters.join(":");
   return { username, password, hostname, port };
 }
-// 订阅页面
-function 提示界面() {
-  return `请把链接导入clash或v2ray`;
-}
-
-function 生成项目介绍页面() {
-  return new Response(
-    `
-<title>项目介绍</title>
-<style>
-body {
-  font-size: 25px;
-}
-</style>
-<pre>
-<strong>edge-tunnel</strong>
-
-简介：这是一种基于CF Worker的免费代理方案
-<a href="https://github.com/ImLTHQ/edge-tunnel" target="_blank">点我跳转仓库</a>
-</pre>
-    `,
-    {
-      status: 200,
-      headers: { "Content-Type": "text/html;charset=utf-8" },
-    }
-  );
+// 其它
+function 字符串转数组(str) {
+  if (typeof str !== 'string') {
+    return []; // 如果输入不是字符串，返回空数组
+  }
+  return str
+    .split('\n') // 使用换行符分割字符串
+    .map(line => line.trim()) // 去除每行的首尾空格
+    .filter(line => line !== ''); // 过滤空行
 }
 
 // 测试SOCKS5和反代IP是否有效
@@ -419,6 +388,34 @@ function 测试SOCKS5和反代IP() {
   }
 
   return { SOCKS5有效, 反代IP有效 };
+}
+
+// 订阅页面
+function 提示界面() {
+  return `请把链接导入clash或v2ray`;
+}
+
+function 生成项目介绍页面() {
+  return new Response(
+    `
+<title>项目介绍</title>
+<style>
+body {
+  font-size: 25px;
+}
+</style>
+<pre>
+<strong>edge-tunnel</strong>
+
+简介：这是一种基于CF Worker的免费代理方案
+<a href="https://github.com/ImLTHQ/edge-tunnel" target="_blank">点我跳转仓库</a>
+</pre>
+    `,
+    {
+      status: 200,
+      headers: { "Content-Type": "text/html;charset=utf-8" },
+    }
+  );
 }
 
 function v2ray配置文件(hostName) {
