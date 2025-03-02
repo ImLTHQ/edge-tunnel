@@ -16,7 +16,9 @@ let 我的优选TXT = [
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SJC.txt",
 ]; // 格式: 地址:端口#节点名称  端口不填默认443 节点名称不填则使用默认节点名称，任何都不填使用自身域名
 
-let 反代IP = ["ts.hpc.tw:443"]; // 格式：["地址1:端口1", "地址2:端口2"]
+let 反代IP = [
+  "ts.hpc.tw:443",
+];
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = ""; // 格式：账号:密码@地址:端口
@@ -62,8 +64,8 @@ export default {
         ];
       }
 
-      const { SOCKS5_OK, PROXY_IP_OK } = 测试SOCKS5和反代IP();
-      if (!SOCKS5_OK && !PROXY_IP_OK) {
+      const { SOCKS5有效, 反代IP有效 } = 测试SOCKS5和反代IP();
+      if (!SOCKS5有效 && !反代IP有效) {
         我的优选.unshift("127.0.0.1#SOCKS55或PROXY_IP出错，可能无法访问CF CDN");
       }
 
@@ -390,8 +392,8 @@ body {
 
 // 测试SOCKS5和反代IP是否有效
 async function 测试SOCKS5和反代IP() {
-  let SOCKS5_OK = true;
-  let PROXY_IP_OK = true;
+  let SOCKS5有效 = true;
+  let 反代IP有效 = true;
 
   if (我的SOCKS5账号) {
     try {
@@ -400,10 +402,10 @@ async function 测试SOCKS5和反代IP() {
       await testSocket.opened;
       testSocket.close();
     } catch (error) {
-      SOCKS5_OK = false;
+      SOCKS5有效 = false;
     }
   } else {
-    SOCKS5_OK = false;
+    SOCKS5有效 = false;
   }
 
   if (反代IP && 反代IP.length > 0) {
@@ -417,15 +419,15 @@ async function 测试SOCKS5和反代IP() {
         await testSocket.opened;
         testSocket.close();
       } catch (error) {
-        PROXY_IP_OK = false;
+        反代IP有效 = false;
         break;
       }
     }
   } else {
-    PROXY_IP_OK = false;
+    反代IP有效 = false;
   }
 
-  return { SOCKS5_OK, PROXY_IP_OK };
+  return { SOCKS5有效, 反代IP有效 };
 }
 
 function v2ray配置文件(hostName) {
@@ -481,8 +483,8 @@ function clash配置文件(hostName) {
     .map((node) => node.proxyConfig)
     .join("\n");
 
-  const { SOCKS5_OK, PROXY_IP_OK } = 测试SOCKS5和反代IP();
-  const CF规则 = !SOCKS5_OK && !PROXY_IP_OK ? '- GEOIP,cloudflare,🎯 直连规则' : '';
+  const { SOCKS5有效, 反代IP有效 } = 测试SOCKS5和反代IP();
+  const CF规则 = !SOCKS5有效 && !反代IP有效 ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
 proxies:
