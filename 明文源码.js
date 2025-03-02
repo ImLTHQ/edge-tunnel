@@ -21,6 +21,8 @@ let 反代IP = "ts.hpc.tw:443"; // 格式：地址:端口
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = ""; // 格式：账号:密码@地址:端口
 
+let 伪装网页 = "";
+
 // 网页入口
 export default {
   async fetch(访问请求, env) {
@@ -36,10 +38,16 @@ export default {
         : env.SOCKS5GLOBAL === "false"
         ? false
         : 启用SOCKS5全局反代;
+      伪装网页 = env.FAKE_WEB || 伪装网页;
 
     const 读取我的请求标头 = 访问请求.headers.get("Upgrade");
     const url = new URL(访问请求.url);
-    if (!读取我的请求标头 || 读取我的请求标头 !== "websocket") {
+    if (伪装网页 && url.pathname === "/") {
+      url.hostname = 伪装网页;
+      url.protocol = 'https:';
+      访问请求 = new Request(url, 访问请求);
+      return fetch(访问请求);
+    } else if (!读取我的请求标头 || 读取我的请求标头 !== "websocket") {
       if (我的优选TXT.length > 0) {
         我的优选 = [...new Set(
           (await Promise.all(
