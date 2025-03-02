@@ -346,9 +346,6 @@ async function 获取SOCKS5账号(SOCKS5) {
 }
 // 其它
 function 字符串转数组(str) {
-  if (typeof str !== 'string') {
-    return []; // 如果输入不是字符串，返回空数组
-  }
   return str
     .split('\n') // 使用换行符分割字符串
     .map(line => line.trim()) // 去除每行的首尾空格
