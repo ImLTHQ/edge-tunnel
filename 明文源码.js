@@ -360,7 +360,6 @@ function 字符串转数组(str) {
     .filter(line => line !== ''); // 过滤空行
 }
 
-// 测试SOCKS5和反代IP是否有效
 function 测试SOCKS5和反代IP() {
   let SOCKS5有效 = true;
   let 反代IP有效 = true;
