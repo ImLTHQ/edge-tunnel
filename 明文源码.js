@@ -38,7 +38,7 @@ export default {
         : env.SOCKS5GLOBAL === "false"
         ? false
         : 启用SOCKS5全局反代;
-      伪装网页 = env.FAKE_WEB || 伪装网页;
+    伪装网页 = env.FAKE_WEB || 伪装网页;
 
     const 读取我的请求标头 = 访问请求.headers.get("Upgrade");
     const url = new URL(访问请求.url);
