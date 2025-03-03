@@ -33,9 +33,9 @@ export default {
     反代IP = env.PROXY_IP || 反代IP;
     我的SOCKS5账号 = env.SOCKS5 || 我的SOCKS5账号;
     启用SOCKS5全局反代 =
-      env.SOCKS5GLOBAL === "true"
+      env.SOCKS5GLOBAL = "true"
         ? true
-        : env.SOCKS5GLOBAL === "false"
+        : env.SOCKS5GLOBAL = "false"
         ? false
         : 启用SOCKS5全局反代;
     伪装网页 = env.FAKE_WEB || 伪装网页;
@@ -448,14 +448,12 @@ function clash配置文件(hostName) {
       const 拆分地址端口 = 地址端口.split(":");
       const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
       const 地址 = 拆分地址端口.join(":").replace(/^\[(.+)\]$/, "$1");
-      const userAgent = "Chrome";
       return {
         nodeConfig: `- name: ${节点名字}
   type: vless
   server: ${地址}
   port: ${端口}
   uuid: ${我的UUID}
-  udp: true
   tls: true
   sni: ${hostName}
   network: ws
@@ -463,7 +461,7 @@ function clash配置文件(hostName) {
     path: "/?ed=2560"
     headers:
       Host: ${hostName}
-      User-Agent: ${userAgent}`,
+      User-Agent: Chrome`,
         proxyConfig: `    - ${节点名字}`,
       };
     });
