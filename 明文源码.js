@@ -59,13 +59,10 @@ export default {
         )];
       }
 
+      // 测试
       const { SOCKS5有效, 反代IP有效 } = 测试SOCKS5和反代IP();
       if (!SOCKS5有效 && !反代IP有效) {
         我的优选.unshift("127.0.0.1#Socks5或反代IP出错，无法访问CF CDN");
-      }
-      // 测试
-      if (启用SOCKS5全局反代) {
-        我的优选.unshift("127.0.0.1#全局反代开启");
       }
 
       const 最终订阅路径 = encodeURIComponent(订阅路径);
