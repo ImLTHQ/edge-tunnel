@@ -362,34 +362,30 @@ async function 获取SOCKS5账号(SOCKS5) {
 // 其它
 function 字符串转数组(str) {
   return str
-    .split('\n') // 使用换行符分割字符串
-    .map(s => s.trim()) // 去除空格
-    .filter(s => s !== ""); // 移除空字符串
+    .split('\n')
 }
 
 async function 测试SOCKS5和反代IP() {
-    let SOCKS5有效 = false;
-    let 反代IP有效 = false;
+    let SOCKS5有效 = true;
+    let 反代IP有效 = true;
 
     if (我的SOCKS5账号) {
         try {
-            const { 地址, 端口 } = await 获取SOCKS5账号(我的SOCKS5账号); // await the promise
+            const { 地址, 端口 } = 获取SOCKS5账号(我的SOCKS5账号);
             const 测试连接 = connect({ hostname: 地址, port: 端口 });
-            await 测试连接.opened; // await the promise
+            await 测试连接.opened;
             测试连接.close();
             SOCKS5有效 = true;
         } catch (error) {
             SOCKS5有效 = false;
-            console.error("SOCKS5 测试失败:", error);
         }
     }
 
     if (反代IP && 反代IP.length > 0) {
-        反代IP有效 = true;
-        for (const ip of 反代IP) {
+        for (const 反代IP of 反代IP) {
             try {
-                const [反代IP地址, 反代IP端口] = ip.split(":");
-                const 测试连接 = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
+                const [proxy_ip, 反代IP端口] = 反代IP.split(":");
+                const 测试连接 = connect({ hostname: proxy_ip, port: Number(反代IP端口) || 443 });
                 await 测试连接.opened;
                 测试连接.close();
             } catch (error) {
