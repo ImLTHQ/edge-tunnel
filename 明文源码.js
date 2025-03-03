@@ -17,7 +17,9 @@ let 我的优选TXT = [
 ];
 
 // 反代IP改为数组
-let 反代IP = ["ts.hpc.tw:443"];
+let 反代IP = [
+  "ts.hpc.tw:443",
+];
 
 let 启用SOCKS5全局反代 = false;
 let 我的SOCKS5账号 = "";
@@ -168,7 +170,6 @@ async function 解析VL标头(VL数据, TCP接口) {
           TCP接口 = await 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口);
         } catch {
           if (反代IP && 反代IP.length > 0) {
-            // 随机选择反代IP
             const 随机索引 = Math.floor(Math.random() * 反代IP.length);
             const 选中的反代IP = 反代IP[随机索引];
             let [反代IP地址, 反代IP端口] = 选中的反代IP.split(":");
@@ -362,7 +363,8 @@ async function 获取SOCKS5账号(SOCKS5) {
 // 其它
 function 字符串转数组(str) {
   return str
-    .split('\n')
+    .split('\n') // 使用换行符分割字符串
+    .filter(s => s !== ""); // 移除空字符串
 }
 
 async function 测试SOCKS5和反代IP() {
@@ -371,25 +373,26 @@ async function 测试SOCKS5和反代IP() {
 
     if (我的SOCKS5账号) {
         try {
-            const { 地址, 端口 } = 获取SOCKS5账号(我的SOCKS5账号);
+            const { 地址, 端口 } = await 获取SOCKS5账号(我的SOCKS5账号); // await the promise
             const 测试连接 = connect({ hostname: 地址, port: 端口 });
-            await 测试连接.opened;
+            await 测试连接.opened; // await the promise
             测试连接.close();
-            SOCKS5有效 = true;
         } catch (error) {
             SOCKS5有效 = false;
+            console.error(`SOCKS5 ${我的SOCKS5账号} 测试失败:`, error);
         }
     }
 
     if (反代IP && 反代IP.length > 0) {
-        for (const 反代IP of 反代IP) {
+        for (const proxy_ip of 反代IP) {
             try {
-                const [proxy_ip, 反代IP端口] = 反代IP.split(":");
-                const 测试连接 = connect({ hostname: proxy_ip, port: Number(反代IP端口) || 443 });
+                const [反代IP地址, 反代IP端口] = proxy_ip.split(":");
+                const 测试连接 = connect({ hostname: 反代IP地址, port: Number(反代IP端口) || 443 });
                 await 测试连接.opened;
                 测试连接.close();
             } catch (error) {
                 反代IP有效 = false;
+                console.error(`反代IP ${ip} 测试失败:`, error);
                 break;
             }
         }
@@ -441,7 +444,7 @@ function v2ray配置文件(hostName) {
     .join("\n");
 }
 
-function clash配置文件(hostName) {
+async function clash配置文件(hostName) {
   if (我的优选.length === 0) {
     我的优选 = [`${hostName}:443`];
   }
@@ -477,7 +480,7 @@ function clash配置文件(hostName) {
     .map((node) => node.proxyConfig)
     .join("\n");
 
-  const { SOCKS5有效, 反代IP有效 } = 测试SOCKS5和反代IP();
+  const { SOCKS5有效, 反代IP有效 } = await 测试SOCKS5和反代IP();
   const CF规则 = !SOCKS5有效 && !反代IP有效 ? '- GEOIP,cloudflare,🎯 直连规则' : '';
 
   return `
