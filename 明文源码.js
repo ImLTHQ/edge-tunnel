@@ -33,9 +33,9 @@ export default {
     反代IP = env.PROXY_IP || 反代IP;
     我的SOCKS5账号 = env.SOCKS5 || 我的SOCKS5账号;
     启用SOCKS5全局反代 =
-      env.SOCKS5GLOBAL = "true"
+      env.SOCKS5_GLOBAL = "true"
         ? true
-        : env.SOCKS5GLOBAL = "false"
+        : env.SOCKS5_GLOBAL = "false"
         ? false
         : 启用SOCKS5全局反代;
     伪装网页 = env.FAKE_WEB || 伪装网页;
