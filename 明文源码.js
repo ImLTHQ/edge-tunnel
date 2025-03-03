@@ -356,8 +356,6 @@ async function 获取SOCKS5账号(SOCKS5) {
 function 字符串转数组(str) {
   return str
     .split('\n') // 使用换行符分割字符串
-    .map(line => line.trim()) // 去除每行的首尾空格
-    .filter(line => line !== ''); // 过滤空行
 }
 
 function 测试SOCKS5和反代IP() {
