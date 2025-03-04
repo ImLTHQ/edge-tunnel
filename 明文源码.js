@@ -5,9 +5,12 @@ let 订阅路径 = "sub";
 let 我的UUID = "550e8400-e29b-41d4-a716-446655440000";
 let 默认节点名称 = "节点";
 
-let 我的优选 = [];
+let 我的优选 = [
+  "pages.dev#优选域名 1",
+  "pages.cloudflare.com#优选域名 2",
+  "www.wto.org#优选域名 3",
+];
 let 我的优选TXT = [
-  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/Domain.txt",
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/HKG.txt",
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/KHH.txt",
   "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/NRT.txt",
