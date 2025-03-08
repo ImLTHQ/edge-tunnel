@@ -69,7 +69,7 @@ export default {
         const 生成配置 = 配置生成器[工具 || "default"];
         return new Response(生成配置(访问请求.headers.get("Host")), {
           status: 200,
-          headers: { "Content-Type": "text/html;charset=utf-8" },
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
         });
         default:
           if (伪装网页) {
@@ -78,11 +78,10 @@ export default {
             访问请求 = new Request(url, 访问请求);
             return fetch(访问请求);
           } else {
-            return new Response(生成项目介绍页面,{
-            status: 200,
-            headers: { "Content-Type": "text/html;charset=utf-8" },
-            }
-            );
+            return new Response (生成项目介绍页面(), {
+              status: 200,
+              headers: {"Content-Type":"text/html;charset=utf-8"},
+            });
           }
       }
     } else if (读取我的请求标头 === "websocket") {
@@ -399,7 +398,7 @@ function 提示界面() {
 }
 
 function 生成项目介绍页面() {
-  return`
+  return `
 <title>项目介绍</title>
 <style>
 body {
@@ -412,8 +411,7 @@ body {
 这是一种基于CF Pages的免费代理方案
 <a href="https://github.com/ImLTHQ/edge-tunnel" target="_blank">点我跳转仓库</a>
 </pre>
-`;
-}
+`}
 
 function 处理优选列表(优选列表, hostName) {
   if (优选列表.length === 0) {
