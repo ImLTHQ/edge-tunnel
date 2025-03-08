@@ -5,7 +5,14 @@ let 订阅路径 = "sub";
 let 我的UUID = "550e8400-e29b-41d4-a716-446655440000";
 let 默认节点名称 = "节点";
 
-let 优选TXT = [];
+let 优选TXT = [
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SpeedTest/HKG.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SpeedTest/KHH.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SpeedTest/NRT.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SpeedTest/LAX.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SpeedTest/SEA.txt",
+  "https://raw.githubusercontent.com/ImLTHQ/edge-tunnel/main/SpeedTest/SJC.txt",
+];
 let 优选列表 = [];
 
 let 反代IP = "";
@@ -62,6 +69,7 @@ export default {
           const 配置生成器 = {
             v2ray: v2ray配置文件,
             clash: clash配置文件,
+            "sing-box": singbox配置文件,
             default: 提示界面,
           };
           const 工具 = Object.keys(配置生成器).find((工具) => 用户代理.includes(工具));
@@ -456,4 +464,96 @@ rules:
   - GEOIP,CLOUDFLARE,🎯 直连规则
   - MATCH,🚀 节点选择
 `;
+}
+
+function singbox配置文件(hostName) {
+  const 处理优选列表 = (优选列表, hostName) => {
+    if (优选列表.length === 0) {
+      优选列表 = [hostName];
+    }
+    return 优选列表.map((获取优选, index) => {
+      const [地址端口, 节点名字 = `节点 ${index + 1}`] = 获取优选.split("#");
+      const 拆分地址端口 = 地址端口.split(":");
+      const 端口 = 拆分地址端口.length > 1 ? Number(拆分地址端口.pop()) : 443;
+      const 地址 = 拆分地址端口.join(":").replace(/^\[(.+)\]$/, "$1");
+      return { 地址, 端口, 节点名字 };
+    });
+  };
+
+  const 生成节点 = (节点列表) => {
+    return 节点列表.map(({ 地址, 端口, 节点名字 }) => {
+      return {
+        type: "vless",
+        tag: 节点名字,
+        server: 地址,
+        server_port: 端口,
+        uuid: 我的UUID,
+        tls: {
+          enabled: true,
+          server_name: hostName,
+        },
+        transport: {
+          type: "ws",
+          path: "/?ed=2560",
+          headers: {
+            Host: hostName,
+          },
+        },
+      };
+    });
+  };
+
+  const 节点列表 = 处理优选列表(优选列表, hostName);
+
+  const 节点配置 = 生成节点(节点列表);
+
+  const 配置 = {
+    log: {
+      level: "info",
+    },
+    dns: {
+      servers: [
+        { address: "1.1.1.1", tag: "cloudflare" },
+        { address: "8.8.8.8", tag: "google" },
+        { address: "223.5.5.5", tag: "ali" },
+      ],
+      rules: [
+        {
+          outbound: "direct",
+          server: "223.5.5.5",
+        },
+      ],
+    },
+    inbounds: [
+      {
+        type: "socks",
+        tag: "socks-in",
+        listen: "127.0.0.1",
+        listen_port: 2333,
+        sniff: true,
+      },
+      {
+        type: "http",
+        tag: "http-in",
+        listen: "127.0.0.1",
+        listen_port: 2334,
+        sniff: true,
+      },
+    ],
+    outbounds: [
+      ...节点配置,
+      {
+        type: "direct",
+        tag: "direct",
+      },
+      {
+        type: "block",
+        tag: "block",
+      },
+    ],
+    route: {
+      rules: [],
+    },
+  };
+  return JSON.stringify(配置, null, 2);
 }
