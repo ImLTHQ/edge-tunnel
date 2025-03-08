@@ -70,7 +70,8 @@ export default {
             v2ray: v2ray配置文件,
             clash: clash配置文件,
             "sing-box": singbox配置文件,
-            default: 提示界面,
+            default: clash配置文件,
+            //default: 提示界面,
           };
           const 工具 = Object.keys(配置生成器).find((工具) => 用户代理.includes(工具));
           const 生成配置 = 配置生成器[工具 || "default"];
