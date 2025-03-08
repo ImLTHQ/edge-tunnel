@@ -390,8 +390,15 @@ function 测试SOCKS5和反代IP() {
 }
 
 // 订阅页面
-function 提示界面() {
-  return `请把链接导入clash或v2ray`;
+function 提示界面(hostName) {
+  const 二维码URL = `https://qrapi-xiaoyetech.pages.dev/?input=${encodeURIComponent(`https://${hostName}/${订阅路径}`)}`;
+  return `
+  请把链接导入clash或v2ray
+  <br>
+  订阅链接：${订阅链接}
+  <br>
+  二维码：<img src="${二维码URL}" alt="订阅链接二维码">
+  `;
 }
 
 function 生成项目介绍页面() {
