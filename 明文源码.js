@@ -69,7 +69,7 @@ export default {
         const 生成配置 = 配置生成器[工具 || "default"];
         return new Response(生成配置(访问请求.headers.get("Host")), {
           status: 200,
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          headers: { "Content-Type": "text/html;charset=utf-8" },
         });
         default:
           if (伪装网页) {
@@ -390,15 +390,8 @@ function 测试SOCKS5和反代IP() {
 }
 
 // 订阅页面
-function 提示界面(hostName) {
-  const 二维码URL = `https://qrapi-xiaoyetech.pages.dev/?input=${encodeURIComponent(`https://${hostName}/${订阅路径}`)}`;
-  return `
-  请把链接导入clash或v2ray
-  <br>
-  订阅链接：${订阅链接}
-  <br>
-  二维码：<img src="${二维码URL}" alt="订阅链接二维码">
-  `;
+function 提示界面() {
+  return `请把链接导入clash或v2ray`;
 }
 
 function 生成项目介绍页面() {
